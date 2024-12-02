@@ -39,6 +39,51 @@ struct MockData {
         )
     ]
     
+    static let searchTokens = [
+        Token(
+            symbol: "SOL",
+            name: "Solana",
+            price: 228.62,
+            priceChange24h: -3.5,
+            volume24h: 1_000_000
+        ),
+        Token(
+            symbol: "USDC",
+            name: "USD Coin",
+            price: 1.00,
+            priceChange24h: -0.02,
+            volume24h: 500_000
+        ),
+        Token(
+            symbol: "USDT",
+            name: "Tether USD",
+            price: 1.00,
+            priceChange24h: 0.01,
+            volume24h: 750_000
+        ),
+        Token(
+            symbol: "JitoSOL",
+            name: "Jito Staked SOL",
+            price: 263.83,
+            priceChange24h: -3.54,
+            volume24h: 300_000
+        ),
+        Token(
+            symbol: "OPUS",
+            name: "Claude Opus",
+            price: 0.0409,
+            priceChange24h: 9.15,
+            volume24h: 100_000
+        ),
+        Token(
+            symbol: "JLP",
+            name: "Jupiter Perps",
+            price: 4.12,
+            priceChange24h: -0.09,
+            volume24h: 200_000
+        )
+    ]
+    
     static let portfolio = Portfolio(
         totalBalance: 1.54,
         tokens: [
@@ -48,6 +93,7 @@ struct MockData {
             PortfolioToken(token: tokens[3], amount: 49547.88144),
             PortfolioToken(token: tokens[4], amount: 23629.89647)
         ],
-        profitLoss: -3.36, profitLossPercentage: 123.47
+        profitLoss: -3.36,
+        profitLossPercentage: 123.47
     )
 } 

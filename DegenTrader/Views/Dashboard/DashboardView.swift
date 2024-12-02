@@ -2,20 +2,28 @@ import SwiftUI
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
+    @State private var showSearch = false
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 0) {
-                    // Notification Bell (top right)
+                    // Magnifying Glass (top right)
                     HStack {
                         Spacer()
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(AppTheme.colors.textPrimary)
-                            .font(.system(size: 20))
+                        Button(action: {
+                            showSearch.toggle()
+                        }) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(AppTheme.colors.textPrimary)
+                                .font(.system(size: 20))
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 40)
+                    .fullScreenCover(isPresented: $showSearch) {
+                        SearchView()
+                    }
                     
                     // Center Content
                     VStack(spacing: 24) {
@@ -42,33 +50,37 @@ struct DashboardView: View {
                         // Action Buttons
                         HStack(spacing: 60) {
                             // Swap Button
-                            VStack(spacing: 12) {
-                                Circle()
-                                    .fill(AppTheme.colors.cardBackground)
-                                    .frame(width: 60, height: 60)
-                                    .overlay(
-                                        Image(systemName: "arrow.left.arrow.right")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(.white)
-                                    )
-                                Text("Swap")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(Color.gray)
+                            Button(action: {}) {
+                                VStack(spacing: 8) {
+                                    Capsule()
+                                        .fill(AppTheme.colors.cardBackground)
+                                        .frame(width: 100, height: 44)
+                                        .overlay(
+                                            Image(systemName: "arrow.left.arrow.right")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(.white)
+                                        )
+                                    Text("Swap")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color.gray)
+                                }
                             }
                             
                             // Buy Button
-                            VStack(spacing: 12) {
-                                Circle()
-                                    .fill(AppTheme.colors.cardBackground)
-                                    .frame(width: 60, height: 60)
-                                    .overlay(
-                                        Image(systemName: "dollarsign.circle")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(.white)
-                                    )
-                                Text("Buy")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(Color.gray)
+                            Button(action: {}) {
+                                VStack(spacing: 8) {
+                                    Capsule()
+                                        .fill(AppTheme.colors.cardBackground)
+                                        .frame(width: 100, height: 44)
+                                        .overlay(
+                                            Image(systemName: "dollarsign.circle")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(.white)
+                                        )
+                                    Text("Buy")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color.gray)
+                                }
                             }
                         }
                         .padding(.top, 20)
