@@ -15,11 +15,21 @@ struct AlertsView: View {
                 }
             }
             .background(AppTheme.colors.background)
-            .navigationTitle("Alerts")
-            .navigationBarItems(trailing: Button(action: {}) {
-                Image(systemName: "plus")
-                    .foregroundColor(AppTheme.colors.accent)
-            })
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Alerts")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {}) {
+                        Image(systemName: "plus")
+                            .foregroundColor(AppTheme.colors.accent)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

@@ -35,13 +35,14 @@ struct AppTheme {
 }
 
 struct ColorTheme {
-    let background = Color.black // Dark theme background
+    let background = Color(hex: "121214")  // Slightly lighter than pure black
     let accent = Color.yellow // The yellow accent from the design
-    let cardBackground = Color(hex: "1C1C1E") // Darker card background
+    let cardBackground = Color(hex: "1C1C1E") // Card background
+    let secondaryBackground = Color(hex: "2C2C2E") // Secondary elements
     let textPrimary = Color.white
-    let textSecondary = Color.gray
-    let positive = Color.green
-    let negative = Color.red
+    let textSecondary = Color(hex: "8E8E93")  // More visible gray
+    let positive = Color(hex: "32D74B")  // iOS green
+    let negative = Color(hex: "FF453A")  // iOS red
 }
 
 struct FontTheme {

@@ -38,7 +38,14 @@ struct MarketView: View {
                 }
             }
             .background(AppTheme.colors.background)
-            .navigationTitle("Market")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Market")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

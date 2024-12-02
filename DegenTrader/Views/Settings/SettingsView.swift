@@ -22,9 +22,16 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("Settings")
             .background(AppTheme.colors.background)
             .scrollContentBackground(.hidden)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Settings")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
