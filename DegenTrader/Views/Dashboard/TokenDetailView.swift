@@ -21,7 +21,7 @@ struct TokenDetailView: View {
                 .padding(.top, 20)
                 
                 // Action Buttons
-                HStack(spacing: 60) {
+                HStack(spacing: 30) {
                     // Swap Button
                     Button(action: {}) {
                         VStack(spacing: 8) {
@@ -157,7 +157,7 @@ struct TokenDetailView: View {
                     )
                 ])
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, 70)
         }
         .background(AppTheme.colors.background)
         .navigationBarTitleDisplayMode(.inline)

@@ -24,7 +24,7 @@ struct DashboardView: View {
                     .padding(.bottom, 40)
                     
                     // Balance Section
-                    VStack(spacing: 24) {
+                    VStack(spacing: 10) {
                         Text("Available Balance")
                             .font(.system(size: 24, weight: .medium))
                             .foregroundColor(AppTheme.colors.textPrimary)
@@ -42,7 +42,7 @@ struct DashboardView: View {
                             .font(.system(size: 48, weight: .bold))
                             .foregroundColor(AppTheme.colors.textPrimary)
                         
-                        HStack(spacing: 24) {
+                        HStack(spacing: 14) {
                             Text("$\(abs(viewModel.portfolio.profitLoss), specifier: "%.2f")")
                                 .foregroundColor(viewModel.portfolio.profitLoss >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
                             
@@ -51,10 +51,10 @@ struct DashboardView: View {
                         }
                         .font(.system(size: 18))
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 20)
                     
                     // Action Buttons
-                    HStack(spacing: 60) {
+                    HStack(spacing: 30) {
                         // Swap Button
                         Button(action: {}) {
                             VStack(spacing: 8) {
