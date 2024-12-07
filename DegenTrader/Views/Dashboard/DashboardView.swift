@@ -93,8 +93,11 @@ struct DashboardView: View {
                     
                     // Token List
                     VStack(spacing: 12) {
-                        ForEach(viewModel.portfolio.tokens) { token in
-                            TokenListRow(token: token)
+                        ForEach(viewModel.portfolio.tokens) { portfolioToken in
+                            NavigationLink(destination: TokenDetailView(token: portfolioToken.token, amount: portfolioToken.amount)) {
+                                TokenListRow(token: portfolioToken)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal)
