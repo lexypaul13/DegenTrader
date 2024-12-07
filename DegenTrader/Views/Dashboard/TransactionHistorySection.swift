@@ -3,6 +3,7 @@ import SwiftUI
 struct TransactionHistorySection: View {
     let transactions: [Transaction]
     @State private var displayedTransactions: Int = 5 // Initial number of transactions to show
+    @State private var selectedTransaction: Transaction?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -12,10 +13,14 @@ struct TransactionHistorySection: View {
             
             VStack(spacing: 1) {
                 ForEach(Array(transactions.prefix(displayedTransactions).enumerated()), id: \.element.id) { index, transaction in
-                    TransactionRow(
-                        transaction: transaction,
-                        isLastItem: index == displayedTransactions - 1 || index == transactions.count - 1
-                    )
+                    Button(action: {
+                        selectedTransaction = transaction
+                    }) {
+                        TransactionRow(
+                            transaction: transaction,
+                            isLastItem: index == displayedTransactions - 1 || index == transactions.count - 1
+                        )
+                    }
                 }
                 
                 if displayedTransactions < transactions.count {
@@ -37,6 +42,9 @@ struct TransactionHistorySection: View {
             .cornerRadius(12)
         }
         .padding(.horizontal)
+        .sheet(item: $selectedTransaction) { transaction in
+            TransactionDetailView(transaction: transaction)
+        }
     }
 }
 
@@ -99,16 +107,18 @@ struct TransactionRow: View {
 }
 
 #Preview {
-    TransactionHistorySection(transactions: [
-        Transaction(
-            date: Date(),
-            type: .swapped,
-            fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
-            toToken: Token(symbol: "JEFFY", name: "Jeffy", price: 0.36, priceChange24h: -5.28, volume24h: 500_000),
-            fromAmount: 0.04291,
-            toAmount: 7133.29855
-        )
-    ])
-    .preferredColorScheme(.dark)
-    .background(AppTheme.colors.background)
+    NavigationView {
+        TransactionHistorySection(transactions: [
+            Transaction(
+                date: Date(),
+                type: .swapped,
+                fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
+                toToken: Token(symbol: "JEFFY", name: "Jeffy", price: 0.36, priceChange24h: -5.28, volume24h: 500_000),
+                fromAmount: 0.04291,
+                toAmount: 7133.29855
+            )
+        ])
+        .preferredColorScheme(.dark)
+        .background(AppTheme.colors.background)
+    }
 } 

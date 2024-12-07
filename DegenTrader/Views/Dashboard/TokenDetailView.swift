@@ -161,6 +161,7 @@ struct TokenDetailView: View {
         }
         .background(AppTheme.colors.background)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(token.name)
