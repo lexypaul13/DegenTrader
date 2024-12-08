@@ -2,13 +2,23 @@ import SwiftUI
 
 struct MarketView: View {
     @State private var searchText = ""
+    @State private var showFilterMenu = false
+    @State private var isFilterActive = false
+    @State private var selectedSortOption: FilterMenuView.SortOption = .rank
+    @State private var selectedTimeFrame: FilterMenuView.TimeFrame = .hour24
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 // Search Bar
-                SearchBar(text: $searchText)
-                    .padding()
+                SearchBarView(
+                    text: $searchText,
+                    showFilterMenu: $showFilterMenu,
+                    isFilterActive: $isFilterActive
+                )
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .padding(.bottom)
                 
                 // Filter Pills
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -25,13 +35,8 @@ struct MarketView: View {
                 // Token List
                 ScrollView {
                     LazyVStack(spacing: 12) {
-                        ForEach(MockData.tokens) { token in
-                            TokenRowView(
-                                symbol: token.symbol,
-                                name: token.name,
-                                price: token.price,
-                                priceChange: token.priceChange24h
-                            )
+                        ForEach(sortedTokens) { token in
+                            TokenListRow(token: PortfolioToken(token: token, amount: 0))
                         }
                     }
                     .padding()
@@ -46,31 +51,38 @@ struct MarketView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-}
-
-struct SearchBar: View {
-    @Binding var text: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(AppTheme.colors.textSecondary)
-            
-            TextField("Search...", text: $text)
-                .foregroundColor(AppTheme.colors.textPrimary)
-            
-            if !text.isEmpty {
-                Button(action: { text = "" }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppTheme.colors.textSecondary)
-                }
+            .sheet(isPresented: $showFilterMenu) {
+                FilterMenuView(
+                    selectedSortOption: $selectedSortOption,
+                    selectedTimeFrame: $selectedTimeFrame,
+                    isFilterActive: $isFilterActive
+                )
             }
         }
-        .padding()
-        .background(AppTheme.colors.cardBackground)
-        .cornerRadius(12)
+    }
+    
+    private var sortedTokens: [Token] {
+        var tokens = MockData.tokens
+        
+        if isFilterActive {
+            switch selectedSortOption {
+            case .rank:
+                // Keep original order
+                break
+            case .volume:
+                tokens.sort { $0.volume24h > $1.volume24h }
+            case .price:
+                tokens.sort { $0.price > $1.price }
+            case .priceChange:
+                // Use the selected time frame's price change
+                tokens.sort { $0.priceChange24h > $1.priceChange24h }
+            case .marketCap:
+                // Assuming we'll add marketCap to Token model later
+                break
+            }
+        }
+        
+        return tokens
     }
 }
 
