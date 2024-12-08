@@ -50,6 +50,7 @@ struct MainTabView: View {
             .ignoresSafeArea(.keyboard)
         }
         .background(AppTheme.colors.background)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
     
     private func getIcon(for index: Int) -> String {

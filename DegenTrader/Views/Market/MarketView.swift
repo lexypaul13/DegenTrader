@@ -8,7 +8,7 @@ struct MarketView: View {
     @State private var selectedTimeFrame: FilterMenuView.TimeFrame = .hour24
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Search Bar
                 SearchBarView(
@@ -18,8 +18,7 @@ struct MarketView: View {
                 )
                 .padding(.horizontal)
                 .padding(.vertical, 8)
-                .padding(.bottom)
-                
+                .padding(.top)
                 // Filter Pills
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -30,16 +29,23 @@ struct MarketView: View {
                     }
                     .padding(.horizontal)
                 }
-                .padding(.bottom)
-                
+                .padding(.top)
+                .padding(.bottom) // Add extra padding for tab bar
+
                 // Token List
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(sortedTokens) { token in
-                            TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                            NavigationLink {
+                                TokenDetailView(token: token, amount: 0)
+                            } label: {
+                                TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding()
+                    .padding(.bottom, 50) // Add extra padding for tab bar
                 }
             }
             .background(AppTheme.colors.background)
@@ -59,6 +65,7 @@ struct MarketView: View {
                 )
             }
         }
+        
     }
     
     private var sortedTokens: [Token] {

@@ -4,6 +4,7 @@ struct SearchBarView: View {
     @Binding var text: String
     @Binding var showFilterMenu: Bool
     @Binding var isFilterActive: Bool
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         HStack(spacing: 8) {
@@ -14,6 +15,8 @@ struct SearchBarView: View {
             TextField("Search", text: $text)
                 .foregroundColor(AppTheme.colors.textPrimary)
                 .font(.system(size: 16))
+                .focused($isFocused)
+                .submitLabel(.done)
             
             if !text.isEmpty {
                 Button(action: { text = "" }) {
@@ -23,6 +26,7 @@ struct SearchBarView: View {
             }
             
             Button(action: {
+                isFocused = false
                 showFilterMenu = true
             }) {
                 ZStack(alignment: .topTrailing) {
@@ -44,6 +48,9 @@ struct SearchBarView: View {
         .padding(.vertical, 8)
         .background(Color(hex: "1C1C1E"))
         .cornerRadius(16)
+        .onTapGesture {
+            isFocused = true
+        }
     }
 }
 
