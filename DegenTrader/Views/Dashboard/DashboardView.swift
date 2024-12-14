@@ -56,7 +56,7 @@ struct DashboardView: View {
                     // Action Buttons
                     HStack(spacing: 30) {
                         // Swap Button
-                        Button(action: {}) {
+                        NavigationLink(destination: SwapView()) {
                             VStack(spacing: 8) {
                                 Capsule()
                                     .fill(AppTheme.colors.cardBackground)
@@ -66,6 +66,7 @@ struct DashboardView: View {
                                             .font(.system(size: 20))
                                             .foregroundColor(.white)
                                     )
+                                
                                 Text("Swap")
                                     .font(.system(size: 14))
                                     .foregroundColor(Color.gray)
