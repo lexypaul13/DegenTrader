@@ -24,7 +24,7 @@ struct DashboardView: View {
                     .padding(.bottom, 40)
                     
                     // Balance Section
-                    VStack(spacing: 24) {
+                    VStack(spacing: 10) {
                         Text("Available Balance")
                             .font(.system(size: 24, weight: .medium))
                             .foregroundColor(AppTheme.colors.textPrimary)
@@ -42,7 +42,7 @@ struct DashboardView: View {
                             .font(.system(size: 48, weight: .bold))
                             .foregroundColor(AppTheme.colors.textPrimary)
                         
-                        HStack(spacing: 24) {
+                        HStack(spacing: 14) {
                             Text("$\(abs(viewModel.portfolio.profitLoss), specifier: "%.2f")")
                                 .foregroundColor(viewModel.portfolio.profitLoss >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
                             
@@ -51,12 +51,12 @@ struct DashboardView: View {
                         }
                         .font(.system(size: 18))
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 20)
                     
                     // Action Buttons
-                    HStack(spacing: 60) {
+                    HStack(spacing: 30) {
                         // Swap Button
-                        Button(action: {}) {
+                        NavigationLink(destination: SwapView()) {
                             VStack(spacing: 8) {
                                 Capsule()
                                     .fill(AppTheme.colors.cardBackground)
@@ -66,6 +66,7 @@ struct DashboardView: View {
                                             .font(.system(size: 20))
                                             .foregroundColor(.white)
                                     )
+                                
                                 Text("Swap")
                                     .font(.system(size: 14))
                                     .foregroundColor(Color.gray)
@@ -93,8 +94,11 @@ struct DashboardView: View {
                     
                     // Token List
                     VStack(spacing: 12) {
-                        ForEach(viewModel.portfolio.tokens) { token in
-                            TokenListRow(token: token)
+                        ForEach(viewModel.portfolio.tokens) { portfolioToken in
+                            NavigationLink(destination: TokenDetailView(token: portfolioToken.token, amount: portfolioToken.amount)) {
+                                TokenListRow(token: portfolioToken)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal)

@@ -155,7 +155,8 @@ struct MockData {
     ]
     
     static let portfolio = Portfolio(
-        totalBalance: 1.54, tokens: [
+        totalBalance: 1.54,
+        tokens: [
             PortfolioToken(token: tokens[0], amount: 0.00503),
             PortfolioToken(token: tokens[1], amount: 10411.76494),
             PortfolioToken(token: tokens[2], amount: 779184.78955),

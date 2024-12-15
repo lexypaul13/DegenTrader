@@ -4,32 +4,35 @@ struct MainTabView: View {
     @State private var selectedTab = 0
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
-                DashboardView()
-                    .tag(0)
-                    .toolbar(.hidden, for: .tabBar)
-                
-                MarketView()
-                    .tag(1)
-                    .toolbar(.hidden, for: .tabBar)
-                
-                AlertsView()
-                    .tag(2)
-                    .toolbar(.hidden, for: .tabBar)
-                
-                SettingsView()
-                    .tag(3)
-                    .toolbar(.hidden, for: .tabBar)
-            }
+        TabView(selection: $selectedTab) {
+            DashboardView()
+                .tag(0)
+                .toolbar(.hidden, for: .tabBar)
             
+            MarketView()
+                .tag(1)
+                .toolbar(.hidden, for: .tabBar)
+            
+            SwapView()
+                .tag(2)
+                .toolbar(.hidden, for: .tabBar)
+            
+            AlertsView()
+                .tag(3)
+                .toolbar(.hidden, for: .tabBar)
+            
+            SettingsView()
+                .tag(4)
+                .toolbar(.hidden, for: .tabBar)
+        }
+        .safeAreaInset(edge: .bottom) {
             // Custom Tab Bar
             VStack(spacing: 0) {
                 Divider()
                     .background(Color.black.opacity(0.3))
                 
                 HStack(spacing: 0) {
-                    ForEach(0..<4) { index in
+                    ForEach(0..<5) { index in
                         Button {
                             selectedTab = index
                         } label: {
@@ -47,7 +50,6 @@ struct MainTabView: View {
                 }
                 .background(AppTheme.colors.cardBackground)
             }
-            .ignoresSafeArea(.keyboard)
         }
         .background(AppTheme.colors.background)
     }
@@ -56,8 +58,9 @@ struct MainTabView: View {
         switch index {
         case 0: return "house.fill"
         case 1: return "chart.line.uptrend.xyaxis"
-        case 2: return "bell.fill"
-        case 3: return "gear"
+        case 2: return "arrow.left.arrow.right"
+        case 3: return "bell.fill"
+        case 4: return "gear"
         default: return ""
         }
     }
@@ -66,8 +69,9 @@ struct MainTabView: View {
         switch index {
         case 0: return "Home"
         case 1: return "Market"
-        case 2: return "Alerts"
-        case 3: return "Settings"
+        case 2: return "Swap"
+        case 3: return "Alerts"
+        case 4: return "Settings"
         default: return ""
         }
     }
