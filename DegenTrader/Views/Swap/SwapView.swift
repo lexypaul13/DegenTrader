@@ -7,6 +7,8 @@ struct SwapView: View {
     @State private var showToTokenSelect = false
     @State private var selectedFromToken = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000)
     @State private var selectedToToken = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000)
+    @State private var isSwapping = false
+    @State private var rotationAngle: Double = 0
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) private var presentationMode
     
@@ -56,9 +58,13 @@ struct SwapView: View {
                                     }
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 8)
-                                    .background(.gray.opacity(0.1))                                        .clipShape(Capsule())
+                                    .background(.gray.opacity(0.1))
+                                    .clipShape(Capsule())
                                 }
                             }
+                            .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
+                            .opacity(isSwapping ? 0 : 1)
+                            .animation(.easeInOut(duration: 0.3), value: isSwapping)
                             
                             Text("23,629.89647 \(selectedFromToken.symbol)")
                                 .font(.system(size: 15))
@@ -75,7 +81,7 @@ struct SwapView: View {
                 }
                 
                 // Swap Button
-                Button(action: swapTokens) {
+                Button(action: animateSwap) {
                     Circle()
                         .fill(AppTheme.colors.accent)
                         .frame(width: 40, height: 40)
@@ -83,6 +89,7 @@ struct SwapView: View {
                             Image(systemName: "arrow.up.arrow.down")
                                 .font(.system(size: 20))
                                 .foregroundColor(Color(hex: "1C1C1E"))
+                                .rotationEffect(.degrees(rotationAngle))
                         )
                 }
                 .padding(.vertical, -12)
@@ -131,6 +138,9 @@ struct SwapView: View {
                                     .clipShape(Capsule())
                                 }
                             }
+                            .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
+                            .opacity(isSwapping ? 0 : 1)
+                            .animation(.easeInOut(duration: 0.3), value: isSwapping)
                             
                             Text("1234244 \(selectedFromToken.symbol)")
                                 .font(.system(size: 15))
@@ -150,10 +160,10 @@ struct SwapView: View {
                 Button(action: {}) {
                     Text("Continue")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(AppTheme.colors.textSecondary)
+                        .foregroundColor(Color(hex: "1C1C1E"))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color(hex: "1C1C1E"))
+                        .background(AppTheme.colors.accent)
                         .cornerRadius(12)
                 }
                 .padding(.top, 12)
@@ -181,6 +191,28 @@ struct SwapView: View {
                             .foregroundColor(.white)
                     }
                 }
+            }
+        }
+    }
+    
+    private func animateSwap() {
+        // Start rotation animation
+        withAnimation(.easeInOut(duration: 0.3)) {
+            rotationAngle += 180
+        }
+        
+        // Trigger swap animation
+        withAnimation(.easeInOut(duration: 0.15)) {
+            isSwapping = true
+        }
+        
+        // Perform the actual swap after a brief delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            swapTokens()
+            
+            // Reset the animation state
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isSwapping = false
             }
         }
     }
