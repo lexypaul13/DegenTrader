@@ -13,9 +13,11 @@ struct MainTabView: View {
                 .tag(1)
                 .toolbar(.hidden, for: .tabBar)
             
-            SwapView()
-                .tag(2)
-                .toolbar(.hidden, for: .tabBar)
+            NavigationStack {
+                SwapView()
+            }
+            .tag(2)
+            .toolbar(.hidden, for: .tabBar)
             
             AlertsView()
                 .tag(3)

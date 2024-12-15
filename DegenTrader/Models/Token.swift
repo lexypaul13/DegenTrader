@@ -1,12 +1,16 @@
 import Foundation
 
-struct Token: Identifiable {
+struct Token: Identifiable, Equatable {
     let id = UUID()
     let symbol: String
     let name: String
     let price: Double
     let priceChange24h: Double
     let volume24h: Double
+    
+    static func == (lhs: Token, rhs: Token) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 struct PortfolioToken: Identifiable {
