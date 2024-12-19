@@ -1,16 +1,22 @@
 import SwiftUI
 
 struct SwapView: View {
-    @State private var fromAmount: String = "0.001231039"
+    @State private var fromAmount: String
     @State private var toAmount: String = "0.000001"
     @State private var showFromTokenSelect = false
     @State private var showToTokenSelect = false
-    @State private var selectedFromToken = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000)
+    @State private var selectedFromToken: Token
     @State private var selectedToToken = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000)
     @State private var isSwapping = false
     @State private var rotationAngle: Double = 0
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) private var presentationMode
+    
+    init(selectedFromToken: Token = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000),
+         fromAmount: String = "0.001231039") {
+        _selectedFromToken = State(initialValue: selectedFromToken)
+        _fromAmount = State(initialValue: fromAmount)
+    }
     
     private var isModal: Bool {
         return presentationMode.wrappedValue.isPresented

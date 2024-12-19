@@ -23,7 +23,9 @@ struct TokenDetailView: View {
                 // Action Buttons
                 HStack(spacing: 30) {
                     // Swap Button
-                    Button(action: {}) {
+                    NavigationLink {
+                        SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", amount))
+                    } label: {
                         VStack(spacing: 8) {
                             Capsule()
                                 .fill(AppTheme.colors.cardBackground)
