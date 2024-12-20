@@ -4,6 +4,7 @@ struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @State private var showSearch = false
     @State private var showBalance = false
+    @State private var showBuyView = false
     
     var body: some View {
         NavigationView {
@@ -74,7 +75,7 @@ struct DashboardView: View {
                         }
                         
                         // Buy Button
-                        Button(action: {}) {
+                        Button(action: { showBuyView = true }) {
                             VStack(spacing: 8) {
                                 Capsule()
                                     .fill(AppTheme.colors.cardBackground)
@@ -87,6 +88,11 @@ struct DashboardView: View {
                                 Text("Buy")
                                     .font(.system(size: 14))
                                     .foregroundColor(Color.gray)
+                            }
+                        }
+                        .fullScreenCover(isPresented: $showBuyView) {
+                            NavigationView {
+                                BuyView(token: Token(symbol: "SOL", name: "Solana", price: 95.42, priceChange24h: 2.5, volume24h: 1_500_000))
                             }
                         }
                     }
