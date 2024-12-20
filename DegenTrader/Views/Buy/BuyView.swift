@@ -15,10 +15,9 @@ struct BuyView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.colors.background.ignoresSafeArea()
             
-            // Content
-            VStack(spacing: 24) {
+            VStack(spacing: 32) {
                 // Amount Display
                 VStack(spacing: 8) {
                     Text("$\(amount == "0" ? "0" : amount)")
@@ -29,7 +28,6 @@ struct BuyView: View {
                         .font(.system(size: 20))
                         .foregroundColor(.gray)
                 }
-                .padding(.top, 60)
                 
                 // Quick Amount Buttons
                 HStack(spacing: 16) {
@@ -60,9 +58,9 @@ struct BuyView: View {
                         .cornerRadius(28)
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 50)
             }
             .padding(.horizontal, 24)
+            .padding(.top, 32)
             
             // Hidden TextField for keyboard input
             TextField("0", text: $amount)
