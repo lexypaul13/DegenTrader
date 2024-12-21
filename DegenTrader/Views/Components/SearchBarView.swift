@@ -17,9 +17,17 @@ struct SearchBarView: View {
                 .font(.system(size: 16))
                 .focused($isFocused)
                 .submitLabel(.done)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .onSubmit {
+                    isFocused = false
+                }
             
             if !text.isEmpty {
-                Button(action: { text = "" }) {
+                Button(action: { 
+                    text = ""
+                    isFocused = false
+                }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(AppTheme.colors.textSecondary)
                 }

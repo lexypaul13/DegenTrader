@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TokenDetailView: View {
     let token: Token
-    let amount: Double
+    @StateObject private var walletManager = WalletManager.shared
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -10,11 +10,11 @@ struct TokenDetailView: View {
             VStack(spacing: 32) {
                 // Token Amount Section
                 VStack(spacing: 8) {
-                    Text("\(amount.formatted(.number.grouping(.automatic))) \(token.symbol)")
+                    Text("\(String(format: "%.4f", walletManager.getBalance(for: token.symbol))) \(token.symbol)")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
                     
-                    Text(String(format: "$%.2f", amount * token.price))
+                    Text(String(format: "$%.2f", walletManager.getBalance(for: token.symbol) * token.price))
                         .font(.system(size: 24))
                         .foregroundColor(.gray)
                 }
@@ -24,7 +24,7 @@ struct TokenDetailView: View {
                 HStack(spacing: 30) {
                     // Swap Button
                     NavigationLink {
-                        SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", amount))
+                        SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))
                     } label: {
                         VStack(spacing: 8) {
                             Capsule()
@@ -207,8 +207,7 @@ struct TokenInfoRow: View {
                 price: 0.00003851,
                 priceChange24h: 29.05,
                 volume24h: 1_000_000
-            ),
-            amount: 10411.76494
+            )
         )
     }
 } 

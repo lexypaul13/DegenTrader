@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
+    @StateObject private var walletManager = WalletManager.shared
     @State private var showSearch = false
     @State private var showBalance = false
     @State private var showBuyView = false
@@ -55,66 +56,16 @@ struct DashboardView: View {
                     .padding(.bottom, 20)
                     
                     // Action Buttons
-                    HStack(spacing: 30) {
-                        // Swap Button
-                        NavigationLink(destination: SwapView()) {
-                            VStack(spacing: 8) {
-                                Capsule()
-                                    .fill(AppTheme.colors.cardBackground)
-                                    .frame(width: 100, height: 44)
-                                    .overlay(
-                                        Image(systemName: "arrow.left.arrow.right")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.white)
-                                    )
-                                
-                                Text("Swap")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(Color.gray)
-                            }
-                        }
-                        
-                        // Buy Button
-                        Button(action: { showBuyView = true }) {
-                            VStack(spacing: 8) {
-                                Capsule()
-                                    .fill(AppTheme.colors.cardBackground)
-                                    .frame(width: 100, height: 44)
-                                    .overlay(
-                                        Image(systemName: "dollarsign.circle")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.white)
-                                    )
-                                Text("Buy")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(Color.gray)
-                            }
-                        }
-                        .fullScreenCover(isPresented: $showBuyView) {
-                            NavigationView {
-                                BuyView(token: Token(symbol: "SOL", name: "Solana", price: 95.42, priceChange24h: 2.5, volume24h: 1_500_000))
-                            }
-                        }
-                    }
-                    .padding(.bottom, 40)
+                    actionButtons
                     
                     // Token List
-                    VStack(spacing: 12) {
-                        ForEach(viewModel.portfolio.tokens) { portfolioToken in
-                            NavigationLink(destination: TokenDetailView(token: portfolioToken.token, amount: portfolioToken.amount)) {
-                                TokenListRow(token: portfolioToken)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 100)
+                    tokenList
                 }
             }
             .background(AppTheme.colors.background)
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
                 withAnimation {
-                    showBalance = value > -100 // Show balance by default, change to Home when scrolled down
+                    showBalance = value > -100
                 }
             }
             .toolbar {
@@ -128,6 +79,77 @@ struct DashboardView: View {
         }
         .fullScreenCover(isPresented: $showSearch) {
             SearchView()
+        }
+        .onChange(of: walletManager.balance) { _ in
+            viewModel.updatePortfolio()
+        }
+    }
+    
+    private var actionButtons: some View {
+        HStack(spacing: 30) {
+            // Swap Button
+            NavigationLink(destination: SwapView()) {
+                ActionButton(
+                    imageName: "arrow.left.arrow.right",
+                    title: "Swap"
+                )
+            }
+            
+            // Buy Button
+            Button(action: { showBuyView = true }) {
+                ActionButton(
+                    imageName: "dollarsign.circle",
+                    title: "Buy"
+                )
+            }
+            .fullScreenCover(isPresented: $showBuyView) {
+                NavigationView {
+                    BuyView(token: Token(
+                        symbol: "SOL",
+                        name: "Solana",
+                        price: 95.42,
+                        priceChange24h: 2.5,
+                        volume24h: 1_500_000
+                    ))
+                }
+            }
+        }
+        .padding(.bottom, 40)
+    }
+    
+    private var tokenList: some View {
+        VStack(spacing: 12) {
+            ForEach(viewModel.portfolio.tokens) { portfolioToken in
+                NavigationLink(
+                    destination: TokenDetailView(token: portfolioToken.token)
+                ) {
+                    TokenListRow(token: portfolioToken)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 100)
+    }
+}
+
+struct ActionButton: View {
+    let imageName: String
+    let title: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Capsule()
+                .fill(AppTheme.colors.cardBackground)
+                .frame(width: 100, height: 44)
+                .overlay(
+                    Image(systemName: imageName)
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                )
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(Color.gray)
         }
     }
 }

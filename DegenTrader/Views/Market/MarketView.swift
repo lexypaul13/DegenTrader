@@ -6,6 +6,8 @@ struct MarketView: View {
     @State private var isFilterActive = false
     @State private var selectedSortOption: FilterMenuView.SortOption = .rank
     @State private var selectedTimeFrame: FilterMenuView.TimeFrame = .hour24
+    @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var isSearchFocused: Bool
     
     var body: some View {
         NavigationStack {
@@ -19,6 +21,7 @@ struct MarketView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 8)
                 .padding(.top)
+                
                 // Filter Pills
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -30,14 +33,13 @@ struct MarketView: View {
                     .padding(.horizontal)
                 }
                 .padding(.top)
-                .padding(.bottom) // Add extra padding for tab bar
-
+                
                 // Token List
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(sortedTokens) { token in
                             NavigationLink {
-                                TokenDetailView(token: token, amount: 0)
+                                TokenDetailView(token: token)
                             } label: {
                                 TokenListRow(token: PortfolioToken(token: token, amount: 0))
                             }
@@ -45,8 +47,18 @@ struct MarketView: View {
                         }
                     }
                     .padding()
-                    .padding(.bottom, 50) // Add extra padding for tab bar
+                    .padding(.bottom, keyboardHeight)
                 }
+                .background(GeometryReader { geometry in
+                    Color.clear.onAppear {
+                        keyboardHeight = geometry.safeAreaInsets.bottom
+                    }
+                })
+                .simultaneousGesture(
+                    DragGesture().onChanged { _ in
+                        hideKeyboard()
+                    }
+                )
             }
             .background(AppTheme.colors.background)
             .toolbar {
@@ -64,8 +76,32 @@ struct MarketView: View {
                     isFilterActive: $isFilterActive
                 )
             }
+            .onTapGesture {
+                hideKeyboard()
+            }
+            .onAppear {
+                setupKeyboardObservers()
+            }
+            .onDisappear {
+                NotificationCenter.default.removeObserver(self)
+            }
+        }
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
         }
         
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            keyboardHeight = 0
+        }
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private var sortedTokens: [Token] {
