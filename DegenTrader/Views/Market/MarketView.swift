@@ -1,4 +1,38 @@
 import SwiftUI
+import UIKit
+
+struct KeyboardAdaptive: ViewModifier {
+    @State private var keyboardHeight: CGFloat = 0
+    private let tabBarHeight: CGFloat = 49 // Standard TabBar height
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + tabBarHeight : 0)
+            .onAppear {
+                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+                    guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+                    withAnimation(.easeOut(duration: 0.16)) {
+                        keyboardHeight = keyboardFrame.height
+                    }
+                }
+                
+                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                    withAnimation(.easeOut(duration: 0.16)) {
+                        keyboardHeight = 0
+                    }
+                }
+            }
+            .onDisappear {
+                NotificationCenter.default.removeObserver(self)
+            }
+    }
+}
+
+extension View {
+    func keyboardAdaptive() -> some View {
+        ModifiedContent(content: self, modifier: KeyboardAdaptive())
+    }
+}
 
 struct MarketView: View {
     @State private var searchText = ""
@@ -6,61 +40,57 @@ struct MarketView: View {
     @State private var isFilterActive = false
     @State private var selectedSortOption: FilterMenuView.SortOption = .rank
     @State private var selectedTimeFrame: FilterMenuView.TimeFrame = .hour24
-    @State private var keyboardHeight: CGFloat = 0
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search Bar
-                SearchBarView(
-                    text: $searchText,
-                    showFilterMenu: $showFilterMenu,
-                    isFilterActive: $isFilterActive
-                )
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .padding(.top)
+            ZStack(alignment: .top) {
+                AppTheme.colors.background.ignoresSafeArea()
                 
-                // Filter Pills
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        FilterPill(title: "Trending", isSelected: true)
-                        FilterPill(title: "Hot", isSelected: false)
-                        FilterPill(title: "New Listings", isSelected: false)
-                        FilterPill(title: "Gainers", isSelected: false)
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.top)
-                
-                // Token List
                 ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(sortedTokens) { token in
-                            NavigationLink {
-                                TokenDetailView(token: token)
-                            } label: {
-                                TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                    VStack(spacing: 0) {
+                        // Search Bar
+                        SearchBarView(
+                            text: $searchText,
+                            showFilterMenu: $showFilterMenu,
+                            isFilterActive: $isFilterActive
+                        )
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .padding(.top)
+                        
+                        // Filter Pills
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                FilterPill(title: "Trending", isSelected: true)
+                                FilterPill(title: "Hot", isSelected: false)
+                                FilterPill(title: "New Listings", isSelected: false)
+                                FilterPill(title: "Gainers", isSelected: false)
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .padding(.horizontal)
                         }
+                        .padding(.top)
+                        
+                        // Token List
+                        LazyVStack(spacing: 12) {
+                            ForEach(sortedTokens) { token in
+                                NavigationLink {
+                                    TokenDetailView(token: token)
+                                } label: {
+                                    TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding()
+                        
+                        // Add extra padding at bottom for TabBar
+                        Spacer()
+                            .frame(height: 100)
                     }
-                    .padding()
-                    .padding(.bottom, keyboardHeight)
                 }
-                .background(GeometryReader { geometry in
-                    Color.clear.onAppear {
-                        keyboardHeight = geometry.safeAreaInsets.bottom
-                    }
-                })
-                .simultaneousGesture(
-                    DragGesture().onChanged { _ in
-                        hideKeyboard()
-                    }
-                )
+                .scrollDismissesKeyboard(.immediately)
             }
-            .background(AppTheme.colors.background)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Market")
@@ -79,24 +109,6 @@ struct MarketView: View {
             .onTapGesture {
                 hideKeyboard()
             }
-            .onAppear {
-                setupKeyboardObservers()
-            }
-            .onDisappear {
-                NotificationCenter.default.removeObserver(self)
-            }
-        }
-    }
-    
-    private func setupKeyboardObservers() {
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
-            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                keyboardHeight = keyboardFrame.height
-            }
-        }
-        
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
-            keyboardHeight = 0
         }
     }
     
@@ -110,17 +122,14 @@ struct MarketView: View {
         if isFilterActive {
             switch selectedSortOption {
             case .rank:
-                // Keep original order
                 break
             case .volume:
                 tokens.sort { $0.volume24h > $1.volume24h }
             case .price:
                 tokens.sort { $0.price > $1.price }
             case .priceChange:
-                // Use the selected time frame's price change
                 tokens.sort { $0.priceChange24h > $1.priceChange24h }
             case .marketCap:
-                // Assuming we'll add marketCap to Token model later
                 break
             }
         }
