@@ -3,79 +3,68 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab = 0
     
+    init() {
+        // Customize TabBar appearance
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(AppTheme.colors.cardBackground)
+        
+        // Customize unselected item appearance
+        appearance.stackedLayoutAppearance.normal.iconColor = UIColor(AppTheme.colors.textSecondary)
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+            .foregroundColor: UIColor(AppTheme.colors.textSecondary)
+        ]
+        
+        // Customize selected item appearance
+        appearance.stackedLayoutAppearance.selected.iconColor = UIColor(AppTheme.colors.accent)
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: UIColor(AppTheme.colors.accent)
+        ]
+        
+        // Apply the appearance
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+        
+        // Remove TabBar border
+        UITabBar.appearance().shadowImage = UIImage()
+        UITabBar.appearance().backgroundImage = UIImage()
+    }
+    
     var body: some View {
         TabView(selection: $selectedTab) {
             DashboardView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
+                }
                 .tag(0)
-                .toolbar(.hidden, for: .tabBar)
             
             MarketView()
+                .tabItem {
+                    Label("Market", systemImage: "chart.line.uptrend.xyaxis")
+                }
                 .tag(1)
-                .toolbar(.hidden, for: .tabBar)
             
             NavigationStack {
                 SwapView()
             }
+            .tabItem {
+                Label("Swap", systemImage: "arrow.left.arrow.right")
+            }
             .tag(2)
-            .toolbar(.hidden, for: .tabBar)
             
             AlertsView()
+                .tabItem {
+                    Label("Alerts", systemImage: "bell.fill")
+                }
                 .tag(3)
-                .toolbar(.hidden, for: .tabBar)
             
             SettingsView()
-                .tag(4)
-                .toolbar(.hidden, for: .tabBar)
-        }
-        .safeAreaInset(edge: .bottom) {
-            // Custom Tab Bar
-            VStack(spacing: 0) {
-                Divider()
-                    .background(Color.black.opacity(0.3))
-                
-                HStack(spacing: 0) {
-                    ForEach(0..<5) { index in
-                        Button {
-                            selectedTab = index
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: getIcon(for: index))
-                                    .font(.system(size: 20))
-                                Text(getTitle(for: index))
-                                    .font(.system(size: 12))
-                            }
-                            .foregroundColor(selectedTab == index ? AppTheme.colors.accent : AppTheme.colors.textSecondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                        }
-                    }
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
                 }
-                .background(AppTheme.colors.cardBackground)
-            }
+                .tag(4)
         }
-        .background(AppTheme.colors.background)
-    }
-    
-    private func getIcon(for index: Int) -> String {
-        switch index {
-        case 0: return "house.fill"
-        case 1: return "chart.line.uptrend.xyaxis"
-        case 2: return "arrow.left.arrow.right"
-        case 3: return "bell.fill"
-        case 4: return "gear"
-        default: return ""
-        }
-    }
-    
-    private func getTitle(for index: Int) -> String {
-        switch index {
-        case 0: return "Home"
-        case 1: return "Market"
-        case 2: return "Swap"
-        case 3: return "Alerts"
-        case 4: return "Settings"
-        default: return ""
-        }
+        .tint(AppTheme.colors.accent)
     }
 }
 

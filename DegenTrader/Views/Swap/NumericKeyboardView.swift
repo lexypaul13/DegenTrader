@@ -2,22 +2,31 @@ import SwiftUI
 
 struct NumericKeyboardView: View {
     @Binding var text: String
-    let maxValue: Double?
     var onDismiss: () -> Void
     
+    private let percentages = ["25%", "50%", "Max"]
+    
     var body: some View {
-        VStack(spacing: 16) {
-            // Percentage buttons row
-            HStack(spacing: 12) {
-                percentageButton("25%")
-                percentageButton("50%")
-                percentageButton("Max")
-                
-                Button(action: onDismiss) {
-                    Text("Done")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(.white)
+        VStack(spacing: 12) {
+            // Percentage buttons
+            HStack(spacing: 8) {
+                ForEach(percentages, id: \.self) { percentage in
+                    Button(action: {
+                        // Handle percentage tap
+                    }) {
+                        Text(percentage)
+                            .font(.system(size: 17))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 32)
+                            .background(Color(hex: "2C2C2E"))
+                            .cornerRadius(16)
+                    }
                 }
+                
+                Button("Done", action: onDismiss)
+                    .font(.system(size: 17))
+                    .foregroundColor(.white)
             }
             .padding(.horizontal)
             
@@ -42,89 +51,85 @@ struct NumericKeyboardView: View {
                 }
                 
                 HStack(spacing: 12) {
-                    numericButton(".")
+                    Button(action: {
+                        if !text.contains(".") {
+                            text += "."
+                        }
+                    }) {
+                        Text(".")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 55)
+                            .background(Color(hex: "2C2C2E"))
+                            .cornerRadius(12)
+                    }
+                    
                     numericButton("0")
                     
-                    Button(action: { backspace() }) {
+                    Button(action: {
+                        if !text.isEmpty {
+                            text.removeLast()
+                        }
+                    }) {
                         Image(systemName: "delete.left")
                             .font(.system(size: 24))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
-                            .background(Color.black.opacity(0.3))
+                            .background(Color(hex: "2C2C2E"))
                             .cornerRadius(12)
                     }
                 }
             }
             .padding(.horizontal)
             
-            // Bottom home indicator padding
-            Color.clear
-                .frame(height: 20)
+            // Bottom row with globe and mic
+            HStack {
+                Button(action: {}) {
+                    Image(systemName: "globe")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                Button(action: {}) {
+                    Image(systemName: "mic")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 12)
         }
         .padding(.top, 12)
         .background(Color(hex: "1C1C1E"))
     }
     
-    private func percentageButton(_ text: String) -> some View {
-        Button(action: { handlePercentage(text) }) {
-            Text(text)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 36)
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(18)
-        }
-    }
-    
     private func numericButton(_ number: String, letters: String? = nil) -> some View {
-        Button(action: { appendNumber(number) }) {
+        Button(action: {
+            if text == "0" {
+                text = number
+            } else {
+                text += number
+            }
+        }) {
             VStack(spacing: 2) {
                 Text(number)
-                    .font(.system(size: 28, weight: .regular))
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                
                 if let letters = letters {
                     Text(letters)
-                        .font(.system(size: 12))
+                        .font(.system(size: 10))
                         .foregroundColor(.gray)
                 }
             }
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 55)
-            .background(Color.black.opacity(0.3))
+            .background(Color(hex: "2C2C2E"))
             .cornerRadius(12)
-        }
-    }
-    
-    private func appendNumber(_ number: String) {
-        if number == "." {
-            if !text.contains(".") {
-                text += number
-            }
-        } else {
-            text += number
-        }
-    }
-    
-    private func backspace() {
-        if !text.isEmpty {
-            text.removeLast()
-        }
-    }
-    
-    private func handlePercentage(_ percentage: String) {
-        guard let maxValue = maxValue else { return }
-        
-        switch percentage {
-        case "25%":
-            text = String(format: "%.8f", maxValue * 0.25)
-        case "50%":
-            text = String(format: "%.8f", maxValue * 0.50)
-        case "Max":
-            text = String(format: "%.8f", maxValue)
-        default:
-            break
         }
     }
 } 

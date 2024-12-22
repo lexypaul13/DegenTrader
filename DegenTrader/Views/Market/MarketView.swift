@@ -1,39 +1,6 @@
 import SwiftUI
 import UIKit
 
-struct KeyboardAdaptive: ViewModifier {
-    @State private var keyboardHeight: CGFloat = 0
-    private let tabBarHeight: CGFloat = 49 // Standard TabBar height
-    
-    func body(content: Content) -> some View {
-        content
-            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + tabBarHeight : 0)
-            .onAppear {
-                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
-                    guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-                    withAnimation(.easeOut(duration: 0.16)) {
-                        keyboardHeight = keyboardFrame.height
-                    }
-                }
-                
-                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
-                    withAnimation(.easeOut(duration: 0.16)) {
-                        keyboardHeight = 0
-                    }
-                }
-            }
-            .onDisappear {
-                NotificationCenter.default.removeObserver(self)
-            }
-    }
-}
-
-extension View {
-    func keyboardAdaptive() -> some View {
-        ModifiedContent(content: self, modifier: KeyboardAdaptive())
-    }
-}
-
 struct MarketView: View {
     @State private var searchText = ""
     @State private var showFilterMenu = false
@@ -44,53 +11,46 @@ struct MarketView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
-                AppTheme.colors.background.ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Search Bar
-                        SearchBarView(
-                            text: $searchText,
-                            showFilterMenu: $showFilterMenu,
-                            isFilterActive: $isFilterActive
-                        )
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Search Bar
+                    SearchBarView(
+                        text: $searchText,
+                        showFilterMenu: $showFilterMenu,
+                        isFilterActive: $isFilterActive
+                    )
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .padding(.top)
+                    
+                    // Filter Pills
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            FilterPill(title: "Trending", isSelected: true)
+                            FilterPill(title: "Hot", isSelected: false)
+                            FilterPill(title: "New Listings", isSelected: false)
+                            FilterPill(title: "Gainers", isSelected: false)
+                        }
                         .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .padding(.top)
-                        
-                        // Filter Pills
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                FilterPill(title: "Trending", isSelected: true)
-                                FilterPill(title: "Hot", isSelected: false)
-                                FilterPill(title: "New Listings", isSelected: false)
-                                FilterPill(title: "Gainers", isSelected: false)
-                            }
-                            .padding(.horizontal)
-                        }
-                        .padding(.top)
-                        
-                        // Token List
-                        LazyVStack(spacing: 12) {
-                            ForEach(sortedTokens) { token in
-                                NavigationLink {
-                                    TokenDetailView(token: token)
-                                } label: {
-                                    TokenListRow(token: PortfolioToken(token: token, amount: 0))
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding()
-                        
-                        // Add extra padding at bottom for TabBar
-                        Spacer()
-                            .frame(height: 100)
                     }
+                    .padding(.top)
+                    
+                    // Token List
+                    LazyVStack(spacing: 12) {
+                        ForEach(sortedTokens) { token in
+                            NavigationLink {
+                                TokenDetailView(token: token)
+                            } label: {
+                                TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding()
                 }
-                .scrollDismissesKeyboard(.immediately)
             }
+            .scrollDismissesKeyboard(.immediately)
+            .background(AppTheme.colors.background)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Market")

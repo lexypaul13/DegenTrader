@@ -99,7 +99,6 @@ struct BuyView: View {
         .animation(.easeInOut(duration: 0.25), value: isAmountFocused)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
-        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Buy \(token.symbol)")
