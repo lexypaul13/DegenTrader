@@ -29,15 +29,29 @@ struct SwapView: View {
     }
 
     var body: some View {
-        ZStack {
-            AppTheme.colors.background.ignoresSafeArea()
-            
-            VStack {
+        GeometryReader { geometry in
+            ZStack {
+                AppTheme.colors.background.ignoresSafeArea()
+                
+                // Main content
                 ScrollView {
-                    mainContent
+                    VStack(spacing: 16) {
+                        youPaySection
+                        swapButton
+                            .padding(.vertical, -8)
+                        youReceiveSection
+                    }
+                    .padding(20)
                 }
                 
-                continueButton
+                // Continue button positioned at absolute bottom
+                VStack {
+                    Spacer()
+                    continueButton
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+                }
+                .ignoresSafeArea(.keyboard)  // This ensures it stays behind keyboard
             }
         }
         .sheet(isPresented: $showFromTokenSelect) {
@@ -67,7 +81,7 @@ struct SwapView: View {
             youPaySection
             swapButton
             youReceiveSection
-            Spacer().frame(height: 100)
+            Spacer(minLength: 200)
         }
         .padding(20)
     }
@@ -89,9 +103,7 @@ struct SwapView: View {
                         Spacer()
 
                         Button(action: { showFromTokenSelect = true }) {
-                            TokenButton(token: selectedFromToken, action: {
-                                
-                            })
+                            TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
                         }
                     }
                     .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
@@ -129,9 +141,7 @@ struct SwapView: View {
                         Spacer()
 
                         Button(action: { showToTokenSelect = true }) {
-                            TokenButton(token: selectedToToken, action: {
-                                
-                            })
+                            TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
                         }
                     }
                     .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
@@ -176,10 +186,8 @@ struct SwapView: View {
         .foregroundColor(Color(hex: "1C1C1E"))
         .frame(maxWidth: .infinity)
         .frame(height: 56)
-        .background(AppTheme.colors.accent)
-        .cornerRadius(12)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 16)
+        .background(Color(hex: "3A3A3C"))
+        .cornerRadius(28)
     }
 
     private func animateSwap() {
