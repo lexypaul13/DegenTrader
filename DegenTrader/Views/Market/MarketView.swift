@@ -13,44 +13,16 @@ struct MarketView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    // Search Bar
-                    SearchBarView(
-                        text: $searchText,
-                        showFilterMenu: $showFilterMenu,
-                        isFilterActive: $isFilterActive
-                    )
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .padding(.top)
-                    
-                    // Filter Pills
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            FilterPill(title: "Trending", isSelected: true)
-                            FilterPill(title: "Hot", isSelected: false)
-                            FilterPill(title: "New Listings", isSelected: false)
-                            FilterPill(title: "Gainers", isSelected: false)
-                        }
-                        .padding(.horizontal)
-                    }
-                    .padding(.top)
-                    
-                    // Token List
-                    LazyVStack(spacing: 12) {
-                        ForEach(sortedTokens) { token in
-                            NavigationLink {
-                                TokenDetailView(token: token)
-                            } label: {
-                                TokenListRow(token: PortfolioToken(token: token, amount: 0))
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    .padding()
+                    searchBarSection
+                    filterPillsSection
+                    tokenListSection
                 }
             }
             .scrollDismissesKeyboard(.immediately)
             .background(AppTheme.colors.background)
+            .navigationDestination(for: Token.self) { token in
+                SwapView(selectedFromToken: token)
+            }
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Market")
@@ -70,6 +42,44 @@ struct MarketView: View {
                 hideKeyboard()
             }
         }
+    }
+    
+    private var searchBarSection: some View {
+        SearchBarView(
+            text: $searchText,
+            showFilterMenu: $showFilterMenu,
+            isFilterActive: $isFilterActive
+        )
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .padding(.top)
+    }
+    
+    private var filterPillsSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                FilterPill(title: "Trending", isSelected: true)
+                FilterPill(title: "Hot", isSelected: false)
+                FilterPill(title: "New Listings", isSelected: false)
+                FilterPill(title: "Gainers", isSelected: false)
+            }
+            .padding(.horizontal)
+        }
+        .padding(.top)
+    }
+    
+    private var tokenListSection: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(sortedTokens) { token in
+                NavigationLink {
+                    TokenDetailView(token: token)
+                } label: {
+                    TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding()
     }
     
     private func hideKeyboard() {

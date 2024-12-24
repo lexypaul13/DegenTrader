@@ -6,6 +6,8 @@ struct DashboardView: View {
     @State private var showSearch = false
     @State private var showBalance = false
     @State private var showBuyView = false
+    @State private var showSwapView = false
+    @State private var selectedSwapToken: Token?
     
     var body: some View {
         NavigationView {

@@ -1,12 +1,16 @@
 import Foundation
 
-struct Token: Identifiable, Equatable {
+struct Token: Identifiable, Hashable {
     let id = UUID()
     let symbol: String
     let name: String
     let price: Double
     let priceChange24h: Double
     let volume24h: Double
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
     
     static func == (lhs: Token, rhs: Token) -> Bool {
         lhs.id == rhs.id

@@ -4,6 +4,7 @@ struct TokenDetailView: View {
     let token: Token
     @StateObject private var walletManager = WalletManager.shared
     @Environment(\.dismiss) private var dismiss
+    @State private var showPriceAlert = false
     
     var body: some View {
         ScrollView {
@@ -36,6 +37,23 @@ struct TokenDetailView: View {
                                         .foregroundColor(.white)
                                 )
                             Text("Swap")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color.gray)
+                        }
+                    }
+                    
+                    // Alert Button
+                    Button(action: { showPriceAlert = true }) {
+                        VStack(spacing: 8) {
+                            Capsule()
+                                .fill(AppTheme.colors.cardBackground)
+                                .frame(width: 100, height: 44)
+                                .overlay(
+                                    Image(systemName: "bell.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.white)
+                                )
+                            Text("Set Alert")
                                 .font(.system(size: 14))
                                 .foregroundColor(Color.gray)
                         }
@@ -177,6 +195,11 @@ struct TokenDetailView: View {
                         .foregroundColor(.white)
                 }
             }
+        }
+        .sheet(isPresented: $showPriceAlert) {
+            PriceAlertView(token: token)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
