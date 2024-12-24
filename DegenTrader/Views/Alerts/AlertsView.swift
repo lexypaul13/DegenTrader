@@ -162,7 +162,7 @@ struct PriceAlertView: View {
                             .foregroundColor(AppTheme.colors.textSecondary)
                         
                         // Percentage Input Row
-                        HStack(spacing: -8) {
+                        HStack {
                             Circle()
                                 .fill(Color(white: 0.01))
                                 .overlay(
@@ -174,7 +174,7 @@ struct PriceAlertView: View {
                                     priceCondition = priceCondition == .under ? .over : .under
                                 }
                             
-                            HStack(alignment: .firstTextBaseline, spacing: -4) {
+                            HStack(alignment: .firstTextBaseline) {
                                 TextField("10", text: $price)
                                     .keyboardType(.decimalPad)
                                     .font(.system(size: 72, weight: .medium))
