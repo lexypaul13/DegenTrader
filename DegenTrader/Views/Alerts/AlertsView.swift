@@ -162,7 +162,7 @@ struct PriceAlertView: View {
                             .foregroundColor(AppTheme.colors.textSecondary)
                         
                         // Percentage Input Row
-                        HStack(spacing: -5) {
+                        HStack(spacing: -8) {
                             Circle()
                                 .fill(Color(white: 0.2))
                                 .frame(width: 48, height: 48)
@@ -171,25 +171,25 @@ struct PriceAlertView: View {
                                         .foregroundColor(priceCondition == .under ? .red : .green)
                                         .font(.system(size: 24))
                                 )
+                                .onTapGesture {
+                                    priceCondition = priceCondition == .under ? .over : .under
+                                }
                             
-                            HStack(alignment: .firstTextBaseline, spacing: -5) {
+                            HStack(alignment: .firstTextBaseline, spacing: -4) {
                                 TextField("10", text: $price)
                                     .keyboardType(.decimalPad)
                                     .font(.system(size: 72, weight: .medium))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
-                                    .frame(width: 100)
+                                    .frame(width: 120)
                                 
                                 Text("%")
                                     .font(.system(size: 48, weight: .medium))
                                     .foregroundColor(AppTheme.colors.textSecondary)
-                                    .offset(y: 0)
                             }
                         }
-                       
-                        .onTapGesture {
-                            priceCondition = priceCondition == .under ? .over : .under
-                        }
+                        .frame(maxWidth: 200)
+                        .frame(maxWidth: .infinity)
                         
                         // Time Frame Toggle
                         HStack(spacing: 0) {
