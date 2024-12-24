@@ -40,11 +40,29 @@ struct AlertsView: View {
 struct PriceAlertView: View {
     @Environment(\.dismiss) private var dismiss
     let token: Token
-    @State private var alertMode: AlertMode = .price
-    @State private var priceCondition: PriceCondition = .under
-    @State private var price: String = ""
-    @State private var currency: Currency = .usd
+    @State private var alertMode: AlertMode
+    @State private var priceCondition: PriceCondition
+    @State private var price: String
+    @State private var currency: Currency
+    @State private var timeFrame: TimeFrame
+    @State private var isRecurring = false
     @FocusState private var isPriceFieldFocused: Bool
+    
+    init(
+        token: Token,
+        alertMode: AlertMode = .price,
+        priceCondition: PriceCondition = .under,
+        price: String = "",
+        currency: Currency = .usd,
+        timeFrame: TimeFrame = .day
+    ) {
+        self.token = token
+        _alertMode = State(initialValue: alertMode)
+        _priceCondition = State(initialValue: priceCondition)
+        _price = State(initialValue: price)
+        _currency = State(initialValue: currency)
+        _timeFrame = State(initialValue: timeFrame)
+    }
     
     enum AlertMode: String, CaseIterable {
         case price = "Alert by Price"
@@ -54,10 +72,10 @@ struct PriceAlertView: View {
     enum PriceCondition {
         case under, over
         
-        var description: String {
+        func description(for mode: AlertMode) -> String {
             switch self {
-            case .under: return "When price is under"
-            case .over: return "When price is over"
+            case .under: return mode == .price ? "When price is under" : "When price drops"
+            case .over: return mode == .price ? "When price is over" : "When price increases"
             }
         }
     }
@@ -67,19 +85,31 @@ struct PriceAlertView: View {
         case sol = "SOL"
     }
     
+    enum TimeFrame: String {
+        case day = "24hr"
+        case hour = "1hr"
+    }
+    
     private var isValidPrice: Bool {
-        guard let inputPrice = Double(price) else { return false }
-        let currentPrice = token.price
+        guard let inputValue = Double(price) else { return false }
         
-        // Prevent alerts too close to current price (within 1%)
-        let minDifference = currentPrice * 0.01
-        let priceDifference = abs(inputPrice - currentPrice)
-        
-        return priceDifference >= minDifference
+        if alertMode == .price {
+            let currentPrice = token.price
+            let minDifference = currentPrice * 0.01
+            let priceDifference = abs(inputValue - currentPrice)
+            return priceDifference >= minDifference
+        } else {
+            // For percentage mode, allow any value between 1-100
+            return inputValue >= 1 && inputValue <= 100
+        }
     }
     
     private var displayPrice: String {
-        price.isEmpty ? String(format: "%.3f", token.price) : price
+        if alertMode == .price {
+            return price.isEmpty ? String(format: "%.3f", token.price) : price
+        } else {
+            return price.isEmpty ? "0" : "\(price)%"
+        }
     }
     
     var body: some View {
@@ -106,7 +136,10 @@ struct PriceAlertView: View {
                 // Mode Selection
                 HStack(spacing: 0) {
                     ForEach(AlertMode.allCases, id: \.self) { mode in
-                        Button(action: { alertMode = mode }) {
+                        Button(action: { 
+                            alertMode = mode
+                            price = ""  // Reset price when switching modes
+                        }) {
                             Text(mode.rawValue)
                                 .font(.system(size: 17))
                                 .foregroundColor(alertMode == mode ? AppTheme.colors.textPrimary : AppTheme.colors.textSecondary)
@@ -120,45 +153,106 @@ struct PriceAlertView: View {
                 .cornerRadius(12)
                 .padding(.horizontal, 20)
                 
-                // Price Condition Text
-                Text(priceCondition.description)
-                    .font(.system(size: 17))
-                    .foregroundColor(AppTheme.colors.textSecondary)
-                
-                // Price Input
-                TextField(String(format: "%.3f", token.price), text: $price)
-                    .keyboardType(.decimalPad)
-                    .font(.system(size: 48, weight: .medium))
-                    .foregroundColor(AppTheme.colors.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .focused($isPriceFieldFocused)
-                    .overlay(
-                        Text(displayPrice)
+                // Price Input Section
+                VStack(spacing: 24) {
+                    if alertMode == .percentage {
+                        // Trend Text
+                        Text(priceCondition.description(for: alertMode))
+                            .font(.system(size: 17))
+                            .foregroundColor(AppTheme.colors.textSecondary)
+                        
+                        // Percentage Input Row
+                        HStack(spacing: 3) {
+                            Circle()
+                                .fill(Color(white: 0.2))
+                                .frame(width: 48, height: 48)
+                                .overlay(
+                                    Image(systemName: priceCondition == .under ? "arrow.down" : "arrow.up")
+                                        .foregroundColor(priceCondition == .under ? .red : .green)
+                                        .font(.system(size: 24))
+                                )
+                            
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                TextField("10", text: $price)
+                                    .keyboardType(.decimalPad)
+                                    .font(.system(size: 72, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .multilineTextAlignment(.center)
+                                    .frame(width: 100)
+                                
+                                Text("%")
+                                    .font(.system(size: 48, weight: .medium))
+                                    .foregroundColor(AppTheme.colors.textSecondary)
+                                    .offset(y: 4)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .onTapGesture {
+                            priceCondition = priceCondition == .under ? .over : .under
+                        }
+                        
+                        // Time Frame Toggle
+                        HStack(spacing: 0) {
+                            ForEach([TimeFrame.day, TimeFrame.hour], id: \.self) { frame in
+                                Button(action: { timeFrame = frame }) {
+                                    Text(frame.rawValue)
+                                        .font(.system(size: 15))
+                                        .foregroundColor(timeFrame == frame ? AppTheme.colors.textPrimary : AppTheme.colors.textSecondary)
+                                        .frame(width: 60)
+                                        .padding(.vertical, 8)
+                                        .background(timeFrame == frame ? AppTheme.colors.cardBackground : Color.clear)
+                                }
+                            }
+                        }
+                        .background(AppTheme.colors.cardBackground.opacity(0.5))
+                        .cornerRadius(20)
+                        
+                        // Recurring Alert Toggle
+                        Toggle("Get recurring alert", isOn: $isRecurring)
+                            .tint(AppTheme.colors.accent)
+                            .padding(.horizontal, 20)
+                    } else {
+                        // Price mode content...
+                        Text(priceCondition.description(for: alertMode))
+                            .font(.system(size: 17))
+                            .foregroundColor(AppTheme.colors.textSecondary)
+                            
+                        TextField(String(format: "%.3f", token.price), text: $price)
+                            .keyboardType(.decimalPad)
                             .font(.system(size: 48, weight: .medium))
                             .foregroundColor(AppTheme.colors.textPrimary)
-                            .opacity(isPriceFieldFocused ? 0 : 1)
-                    )
-                
-                // Currency Toggle
-                HStack(spacing: 0) {
-                    ForEach([Currency.usd, Currency.sol], id: \.self) { curr in
-                        Button(action: { currency = curr }) {
-                            Text(curr.rawValue)
-                                .font(.system(size: 15))
-                                .foregroundColor(currency == curr ? AppTheme.colors.textPrimary : AppTheme.colors.textSecondary)
-                                .frame(width: 60)
-                                .padding(.vertical, 8)
-                                .background(currency == curr ? AppTheme.colors.cardBackground : Color.clear)
+                            .multilineTextAlignment(.center)
+                            .focused($isPriceFieldFocused)
+                            .overlay(
+                                Text(displayPrice)
+                                    .font(.system(size: 48, weight: .medium))
+                                    .foregroundColor(AppTheme.colors.textPrimary)
+                                    .opacity(isPriceFieldFocused ? 0 : 1)
+                            )
+                            
+                        // Currency Toggle
+                        HStack(spacing: 0) {
+                            ForEach([Currency.usd, Currency.sol], id: \.self) { curr in
+                                Button(action: { currency = curr }) {
+                                    Text(curr.rawValue)
+                                        .font(.system(size: 15))
+                                        .foregroundColor(currency == curr ? AppTheme.colors.textPrimary : AppTheme.colors.textSecondary)
+                                        .frame(width: 60)
+                                        .padding(.vertical, 8)
+                                        .background(currency == curr ? AppTheme.colors.cardBackground : Color.clear)
+                                }
+                            }
                         }
+                        .background(AppTheme.colors.cardBackground.opacity(0.5))
+                        .cornerRadius(20)
+                        
+                        // Current Price
+                        Text("Current Price \(String(format: "$%.3f", token.price))")
+                            .font(.system(size: 15))
+                            .foregroundColor(AppTheme.colors.textSecondary)
                     }
                 }
-                .background(AppTheme.colors.cardBackground.opacity(0.5))
-                .cornerRadius(20)
-                
-                // Current Price
-                Text("Current Price \(String(format: "$%.3f", token.price))")
-                    .font(.system(size: 15))
-                    .foregroundColor(AppTheme.colors.textSecondary)
+                .padding(.horizontal, 20)
                 
                 // Set Alert Button
                 Button(action: {
@@ -195,7 +289,7 @@ struct PriceAlertView: View {
         .preferredColorScheme(.dark)
 }
 
-#Preview("Price Alert") {
+#Preview("Price Alert - Price Mode") {
     PriceAlertView(token: Token(
         symbol: "SOL",
         name: "Solana",
