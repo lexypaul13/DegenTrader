@@ -164,8 +164,7 @@ struct PriceAlertView: View {
                         // Percentage Input Row
                         HStack(spacing: -8) {
                             Circle()
-                                .fill(Color(white: 0.2))
-                                .frame(width: 48, height: 48)
+                                .fill(Color(white: 0.01))
                                 .overlay(
                                     Image(systemName: priceCondition == .under ? "arrow.down" : "arrow.up")
                                         .foregroundColor(priceCondition == .under ? .red : .green)
@@ -181,14 +180,16 @@ struct PriceAlertView: View {
                                     .font(.system(size: 72, weight: .medium))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
-                                    .frame(width: 120)
-                                
+                                    
                                 Text("%")
                                     .font(.system(size: 48, weight: .medium))
                                     .foregroundColor(AppTheme.colors.textSecondary)
                             }
+                            .fixedSize()
+                            .padding(.horizontal)
+
                         }
-                        .frame(maxWidth: 200)
+                        .frame(maxWidth: 150)
                         .frame(maxWidth: .infinity)
                         
                         // Time Frame Toggle
