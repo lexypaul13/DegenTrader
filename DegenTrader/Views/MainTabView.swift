@@ -57,12 +57,6 @@ struct MainTabView: View {
                     Label("Alerts", systemImage: "bell.fill")
                 }
                 .tag(3)
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-                .tag(4)
         }
         .tint(AppTheme.colors.accent)
     }

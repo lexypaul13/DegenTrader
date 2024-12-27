@@ -36,48 +36,66 @@ struct AlertsView: View {
                     }
                     .padding(.horizontal, 32)
                 } else {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            ForEach(tokensWithAlerts) { token in
-                                VStack(spacing: 16) {
-                                    // Token Header
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text(token.name)
-                                                .font(.system(size: 17))
-                                                .foregroundColor(.white)
-                                            Text(token.symbol)
-                                                .font(.system(size: 13))
-                                                .foregroundColor(Color(white: 0.5))
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Button(action: {
-                                            selectedToken = token
-                                            showingPriceAlert = true
-                                        }) {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "plus")
-                                                Text("Add")
-                                            }
-                                            .foregroundColor(.blue)
-                                            .font(.system(size: 15))
-                                        }
+                    List {
+                        ForEach(tokensWithAlerts) { token in
+                            Section {
+                                // Custom header row with Add button
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(token.name)
+                                            .font(.system(size: 17))
+                                            .foregroundColor(.white)
+                                        Text(token.symbol)
+                                            .font(.system(size: 13))
+                                            .foregroundColor(Color(white: 0.5))
                                     }
                                     
-                                    // Token's Alerts
-                                    VStack(spacing: 12) {
-                                        ForEach(alertsManager.alertsForToken(token)) { alert in
-                                            AlertCard(alert: alert)
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        selectedToken = token
+                                        showingPriceAlert = true
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "plus")
+                                            Text("Add")
                                         }
+                                        .foregroundColor(.yellow)
+                                        .font(.system(size: 15))
                                     }
                                 }
                                 .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                                
+                                // Alert cards
+                                ForEach(alertsManager.alertsForToken(token)) { alert in
+                                    AlertCard(alert: alert)
+                                        .listRowInsets(EdgeInsets())
+                                        .listRowBackground(Color.clear)
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                            Button {
+                                                withAnimation {
+                                                    alertsManager.deleteAlert(alert)
+                                                }
+                                            } label: {
+                                                Text("Delete")
+                                                    .font(.system(size: 17))
+                                            }
+                                            .tint(.red)
+                                        }
+                                }
+                            } header: {
+                                // Empty header to maintain section spacing
+                                Color.clear
+                                    .frame(height: 0)
+                                    .listRowInsets(EdgeInsets())
                             }
                         }
-                        .padding(.vertical, 16)
                     }
+                    .listStyle(.plain)
+                    .background(AppTheme.colors.background)
                 }
             }
             .navigationTitle("Price Alerts")

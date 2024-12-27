@@ -2,7 +2,9 @@ import SwiftUI
 
 struct PriceAlertView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var alertsManager = AlertsManager.shared
     let token: Token
+    let existingAlert: Alert?
     @State private var alertMode: AlertMode
     @State private var priceCondition: PriceCondition
     @State private var price: String
@@ -13,6 +15,7 @@ struct PriceAlertView: View {
     
     init(
         token: Token,
+        existingAlert: Alert? = nil,
         alertMode: AlertMode = .price,
         priceCondition: PriceCondition = .under,
         price: String = "",
@@ -20,11 +23,12 @@ struct PriceAlertView: View {
         timeFrame: TimeFrame = .day
     ) {
         self.token = token
-        _alertMode = State(initialValue: alertMode)
-        _priceCondition = State(initialValue: priceCondition)
-        _price = State(initialValue: price)
+        self.existingAlert = existingAlert
+        _alertMode = State(initialValue: existingAlert?.mode ?? alertMode)
+        _priceCondition = State(initialValue: existingAlert?.condition ?? priceCondition)
+        _price = State(initialValue: existingAlert != nil ? String(format: "%.2f", existingAlert!.value) : price)
         _currency = State(initialValue: currency)
-        _timeFrame = State(initialValue: timeFrame)
+        _timeFrame = State(initialValue: existingAlert?.timeFrame ?? timeFrame)
     }
     
     enum Currency: String {
@@ -205,15 +209,21 @@ struct PriceAlertView: View {
                             mode: alertMode,
                             condition: priceCondition,
                             value: value,
-                            timeFrame: alertMode == .percentage ? timeFrame : nil
+                            timeFrame: alertMode == .percentage ? timeFrame : nil,
+                            isEnabled: existingAlert?.isEnabled ?? true
                         )
-                        AlertsManager.shared.addAlert(alert: alert)
+                        
+                        if let existing = existingAlert {
+                            alertsManager.updateAlert(alert)
+                        } else {
+                            alertsManager.addAlert(alert: alert)
+                        }
                     }
                     dismiss()
                 }) {
                     HStack {
                         Image(systemName: "bell.fill")
-                        Text("Set Alert")
+                        Text(existingAlert != nil ? "Update Alert" : "Set Alert")
                     }
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.black)
