@@ -88,8 +88,10 @@ struct RecentActivityRow: View {
             VStack(alignment: .trailing, spacing: 6) {
                 // Received amount (green)
                 HStack(spacing: 4) {
-                    Text("+\(formatAmount(transaction.toAmount))")
+                    Text(transaction.status == .succeeded ? "+" : "")
                         .foregroundColor(.green)
+                    Text(formatAmount(transaction.toAmount))
+                        .foregroundColor(transaction.status == .succeeded ? .green : .gray)
                     Text(transaction.toToken.symbol)
                         .foregroundColor(.gray)
                 }
@@ -129,7 +131,7 @@ struct RecentActivityRow: View {
         } else if amount >= 1 {
             return String(format: "%.4f", amount)
         } else {
-            return String(format: "%.8f", amount)
+            return String(format: "%.4f", amount)
         }
     }
 }

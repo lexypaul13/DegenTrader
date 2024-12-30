@@ -240,33 +240,25 @@ struct CustomTextField: UIViewRepresentable {
         // Create and set the input accessory view
         let percentageView = UIHostingController(rootView: 
             PercentageButtonsView(handlePercentage: { percentage in
-                if field == .from {
-                    // Calculate max amount for "from" field
-                    let maxAmount = 100.0 // Example max amount
-                    text = String(format: "%.8f", maxAmount * percentage)
-                } else {
-                    // Calculate max amount for "to" field
-                    let maxAmount = 100.0 // Example max amount
-                    text = String(format: "%.8f", maxAmount * percentage)
-                }
+                let maxAmount = 100.0 // Example max amount
+                text = String(format: "%.8f", maxAmount * percentage)
+            }, onDone: {
+                textField.resignFirstResponder()
             })
         )
         percentageView.view.backgroundColor = .clear
         textField.inputAccessoryView = percentageView.view
         
         // Set a fixed size for the input accessory view
-        let size = percentageView.view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        percentageView.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: size.height)
+        let size = CGSize(width: UIScreen.main.bounds.width, height: 50)
+        percentageView.view.frame = CGRect(origin: .zero, size: size)
         
         return textField
     }
     
     func updateUIView(_ uiView: UITextField, context: Context) {
-        uiView.text = text
-        if focusedField.wrappedValue == field {
-            uiView.becomeFirstResponder()
-        } else if uiView.isFirstResponder {
-            uiView.resignFirstResponder()
+        if uiView.text != text {
+            uiView.text = text
         }
     }
     
@@ -281,28 +273,36 @@ struct CustomTextField: UIViewRepresentable {
             self.parent = parent
         }
         
-        func textFieldDidBeginEditing(_ textField: UITextField) {
-            parent.focusedField.wrappedValue = parent.field
-        }
-        
-        func textFieldDidEndEditing(_ textField: UITextField) {
-            if parent.focusedField.wrappedValue == parent.field {
-                parent.focusedField.wrappedValue = nil
-            }
-        }
-        
         func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
             let currentText = textField.text ?? ""
             guard let stringRange = Range(range, in: currentText) else { return false }
             let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
-            parent.text = updatedText
-            return false
+            
+            // Only allow one decimal point
+            let components = updatedText.components(separatedBy: ".")
+            if components.count > 2 {
+                return false
+            }
+            
+            // Only allow numbers and decimal point
+            let allowedCharacters = CharacterSet(charactersIn: "0123456789.")
+            let characterSet = CharacterSet(charactersIn: string)
+            guard allowedCharacters.isSuperset(of: characterSet) else {
+                return false
+            }
+            
+            DispatchQueue.main.async {
+                self.parent.text = updatedText
+            }
+            
+            return true
         }
     }
 }
 
 struct PercentageButtonsView: View {
     let handlePercentage: (Double) -> Void
+    let onDone: () -> Void
     
     var body: some View {
         HStack(spacing: 8) {
@@ -326,7 +326,7 @@ struct PercentageButtonsView: View {
             }
             
             Button("Done") {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                onDone()
             }
             .font(.system(size: 17))
             .foregroundColor(.white)
