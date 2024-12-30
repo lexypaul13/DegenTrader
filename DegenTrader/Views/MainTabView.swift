@@ -57,6 +57,12 @@ struct MainTabView: View {
                     Label("Alerts", systemImage: "bell.fill")
                 }
                 .tag(3)
+            
+            RecentActivityView()
+                .tabItem {
+                    Label("Recent", systemImage: "clock.arrow.circlepath")
+                }
+                .tag(4)
         }
         .tint(AppTheme.colors.accent)
     }

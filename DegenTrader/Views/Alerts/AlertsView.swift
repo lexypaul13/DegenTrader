@@ -36,57 +36,61 @@ struct AlertsView: View {
                     }
                     .padding(.horizontal, 32)
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 24) {
-                            ForEach(tokensWithAlerts) { token in
-                                VStack(spacing: 16) {
-                                    // Custom header row with Add button
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text(token.name)
-                                                .font(.system(size: 17))
-                                                .foregroundColor(.white)
-                                            Text(token.symbol)
-                                                .font(.system(size: 13))
-                                                .foregroundColor(Color(white: 0.5))
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Button(action: {
-                                            selectedToken = token
-                                            showingPriceAlert = true
-                                        }) {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "plus")
-                                                Text("Add")
-                                            }
-                                            .foregroundColor(.yellow)
-                                            .font(.system(size: 15))
-                                        }
+                    List {
+                        ForEach(tokensWithAlerts) { token in
+                            Section {
+                                // Custom header row with Add button
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(token.name)
+                                            .font(.system(size: 17))
+                                            .foregroundColor(.white)
+                                        Text(token.symbol)
+                                            .font(.system(size: 13))
+                                            .foregroundColor(Color(white: 0.5))
                                     }
-                                    .padding(.horizontal, 16)
                                     
-                                    // Alert cards
-                                    ForEach(alertsManager.alertsForToken(token)) { alert in
-                                        AlertCard(alert: alert)
-                                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                                Button {
-                                                    withAnimation {
-                                                        alertsManager.deleteAlert(alert)
-                                                    }
-                                                } label: {
-                                                    Text("Delete")
-                                                        .font(.system(size: 17))
-                                                }
-                                                .tint(.red)
-                                            }
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        selectedToken = token
+                                        showingPriceAlert = true
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "plus")
+                                            Text("Add")
+                                        }
+                                        .foregroundColor(.yellow)
+                                        .font(.system(size: 15))
                                     }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                                
+                                // Alert cards
+                                ForEach(alertsManager.alertsForToken(token)) { alert in
+                                    AlertCard(alert: alert)
+                                        .listRowInsets(EdgeInsets())
+                                        .listRowBackground(Color.clear)
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                            Button(role: .destructive) {
+                                                withAnimation {
+                                                    alertsManager.deleteAlert(alert)
+                                                }
+                                            } label: {
+                                                Text("Delete")
+                                                    .font(.system(size: 17))
+                                            }
+                                            .tint(.red)
+                                        }
                                 }
                             }
                         }
-                        .padding(.vertical, 16)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
             .toolbar {

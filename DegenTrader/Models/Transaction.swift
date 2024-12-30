@@ -1,43 +1,26 @@
 import Foundation
 import SwiftUI
-enum TransactionType {
-    case swapped
-    case sent
-    case received
-}
 
-enum TransactionStatus {
-    case succeeded
-    case failed
-    
-    var color: Color {
-        switch self {
-        case .succeeded:
-            return .green
-        case .failed:
-            return .red
-        }
-    }
-    
-    var text: String {
-        switch self {
-        case .succeeded:
-            return "Succeeded"
-        case .failed:
-            return "Failed"
-        }
-    }
-}
-
-struct Transaction: Identifiable {
-    let id = UUID()
+struct Transaction: Identifiable, Codable {
+    var id: UUID
     let date: Date
-    let type: TransactionType
     let fromToken: Token
     let toToken: Token
     let fromAmount: Double
     let toAmount: Double
     let status: TransactionStatus
+    let source: String
+    
+    init(id: UUID = UUID(), date: Date, fromToken: Token, toToken: Token, fromAmount: Double, toAmount: Double, status: TransactionStatus, source: String) {
+        self.id = id
+        self.date = date
+        self.fromToken = fromToken
+        self.toToken = toToken
+        self.fromAmount = fromAmount
+        self.toAmount = toAmount
+        self.status = status
+        self.source = source
+    }
     
     var formattedDate: String {
         let formatter = DateFormatter()
@@ -46,14 +29,43 @@ struct Transaction: Identifiable {
         return formatter.string(from: date)
     }
     
-    // Default initializer with status parameter
-    init(date: Date, type: TransactionType, fromToken: Token, toToken: Token, fromAmount: Double, toAmount: Double, status: TransactionStatus = .succeeded) {
-        self.date = date
-        self.type = type
-        self.fromToken = fromToken
-        self.toToken = toToken
-        self.fromAmount = fromAmount
-        self.toAmount = toAmount
-        self.status = status
+    enum TransactionStatus: String, Codable {
+        case succeeded
+        case failed
+        
+        var text: String {
+            switch self {
+            case .succeeded:
+                return "Swapped"
+            case .failed:
+                return "Failed app interaction"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .succeeded:
+                return .green
+            case .failed:
+                return .red
+            }
+        }
+    }
+}
+
+// Extension for grouping transactions by date
+extension Transaction {
+    var dateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: date)
+    }
+}
+
+// Extension for sorting and grouping
+extension Array where Element == Transaction {
+    var groupedByDate: [(String, [Transaction])] {
+        let grouped = Dictionary(grouping: self) { $0.dateString }
+        return grouped.sorted { $0.key > $1.key }
     }
 } 

@@ -82,7 +82,7 @@ struct DashboardView: View {
         .fullScreenCover(isPresented: $showSearch) {
             SearchView()
         }
-        .onChange(of: walletManager.balance) { _ in
+        .onChange(of: walletManager.balances) { _ in
             viewModel.updatePortfolio()
         }
     }
@@ -106,60 +106,36 @@ struct DashboardView: View {
             }
             .fullScreenCover(isPresented: $showBuyView) {
                 NavigationView {
-                    BuyView(token: Token(
-                        symbol: "SOL",
-                        name: "Solana",
-                        price: 95.42,
-                        priceChange24h: 2.5,
-                        volume24h: 1_500_000
-                    ))
+                    BuyView(token: Token(symbol: "SOL", name: "Solana", price: 100.0, priceChange24h: 0, volume24h: 0))
                 }
             }
+            
+            // More Button
+            Button(action: {}) {
+                ActionButton(
+                    imageName: "ellipsis",
+                    title: "More"
+                )
+            }
         }
-        .padding(.bottom, 40)
+        .padding(.bottom, 32)
     }
     
     private var tokenList: some View {
-        VStack(spacing: 12) {
-            ForEach(viewModel.portfolio.tokens) { portfolioToken in
-                NavigationLink(
-                    destination: TokenDetailView(token: portfolioToken.token)
-                ) {
-                    TokenListRow(token: portfolioToken)
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Your Tokens")
+                .font(.system(size: 24))
+                .foregroundColor(.gray)
+                .padding(.horizontal)
+            
+            ForEach(viewModel.portfolio.tokens) { token in
+                NavigationLink {
+                    TokenDetailView(token: token.token)
+                } label: {
+                    TokenListRow(token: token)
                 }
-                .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(.horizontal)
-        .padding(.bottom, 100)
-    }
-}
-
-struct ActionButton: View {
-    let imageName: String
-    let title: String
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Capsule()
-                .fill(AppTheme.colors.cardBackground)
-                .frame(width: 100, height: 44)
-                .overlay(
-                    Image(systemName: imageName)
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                )
-            Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(Color.gray)
-        }
-    }
-}
-
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
 
@@ -207,6 +183,35 @@ struct TokenListRow: View {
         .padding()
         .background(AppTheme.colors.cardBackground)
         .cornerRadius(12)
+    }
+}
+
+struct ActionButton: View {
+    let imageName: String
+    let title: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Circle()
+                .fill(AppTheme.colors.cardBackground)
+                .frame(width: 56, height: 56)
+                .overlay(
+                    Image(systemName: imageName)
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
+                )
+            
+            Text(title)
+                .font(.system(size: 13))
+                .foregroundColor(.gray)
+        }
+    }
+}
+
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

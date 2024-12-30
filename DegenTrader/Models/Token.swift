@@ -1,12 +1,21 @@
 import Foundation
 
-struct Token: Identifiable, Hashable {
-    let id = UUID()
+struct Token: Identifiable, Codable, Hashable {
+    var id: UUID
     let symbol: String
     let name: String
     let price: Double
     let priceChange24h: Double
     let volume24h: Double
+    
+    init(id: UUID = UUID(), symbol: String, name: String, price: Double, priceChange24h: Double, volume24h: Double) {
+        self.id = id
+        self.symbol = symbol
+        self.name = name
+        self.price = price
+        self.priceChange24h = priceChange24h
+        self.volume24h = volume24h
+    }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)

@@ -161,19 +161,21 @@ struct TokenDetailView: View {
                 TransactionHistorySection(transactions: [
                     Transaction(
                         date: Date(),
-                        type: .swapped,
                         fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
                         toToken: token,
                         fromAmount: 0.04291,
-                        toAmount: 7133.29855
+                        toAmount: 7133.29855,
+                        status: .succeeded,
+                        source: "Phantom"
                     ),
                     Transaction(
                         date: Date().addingTimeInterval(-3600),
-                        type: .swapped,
                         fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
                         toToken: token,
                         fromAmount: 0.02145,
-                        toAmount: 3278.46639
+                        toAmount: 3278.46639,
+                        status: .succeeded,
+                        source: "Phantom"
                     )
                 ])
             }
