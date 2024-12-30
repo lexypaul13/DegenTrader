@@ -18,12 +18,6 @@ struct BuyView: View {
         return String(format: "%.4f", tokenAmount)
     }
     
-    var isValidAmount: Bool {
-        guard let dollarAmount = Double(amount) else { return false }
-        let tokenAmount = dollarAmount / token.price
-        return dollarAmount >= minAmount && tokenAmount <= walletManager.getBalance(for: token.symbol)
-    }
-    
     var body: some View {
         ZStack {
             AppTheme.colors.background.ignoresSafeArea()
@@ -50,7 +44,6 @@ struct BuyView: View {
                     ForEach(quickAmounts, id: \.self) { value in
                         Button(action: {
                             amount = "\(value)"
-                            isAmountFocused = true
                         }) {
                             Text("$\(value)")
                                 .font(.system(size: 17, weight: .medium))
@@ -60,8 +53,6 @@ struct BuyView: View {
                                 .background(Color(hex: "2C2C2E"))
                                 .clipShape(Capsule())
                         }
-                        .disabled(Double(value) / token.price > walletManager.getBalance(for: token.symbol))
-                        .opacity(Double(value) / token.price > walletManager.getBalance(for: token.symbol) ? 0.5 : 1)
                     }
                 }
                 .padding(.horizontal, 24)
@@ -72,10 +63,9 @@ struct BuyView: View {
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(isValidAmount ? AppTheme.colors.accent : Color.gray)
+                        .background(AppTheme.colors.accent)
                         .cornerRadius(28)
                 }
-                .disabled(!isValidAmount)
                 .padding(.horizontal, 24)
             }
             .padding(.horizontal, 24)
@@ -86,17 +76,7 @@ struct BuyView: View {
                 .keyboardType(.decimalPad)
                 .focused($isAmountFocused)
                 .opacity(0)
-                .onChange(of: amount) { newValue in
-                    // Validate decimal places
-                    if let dotIndex = newValue.firstIndex(of: ".") {
-                        let decimals = newValue[newValue.index(after: dotIndex)...].count
-                        if decimals > 2 {
-                            amount = String(newValue.prefix(newValue.count - 1))
-                        }
-                    }
-                }
         }
-        .animation(.easeInOut(duration: 0.25), value: isAmountFocused)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar {
@@ -115,7 +95,11 @@ struct BuyView: View {
             }
         }
         .alert("Transaction", isPresented: $showingAlert) {
-            Button("OK") { }
+            Button("OK") { 
+                if alertMessage.contains("Successfully") {
+                    dismiss()
+                }
+            }
         } message: {
             Text(alertMessage)
         }
@@ -125,21 +109,27 @@ struct BuyView: View {
     }
     
     private func handleBuy() {
-        guard let dollarAmount = Double(amount),
-              dollarAmount >= minAmount else {
-            alertMessage = "Minimum amount is $\(minAmount)"
+        guard let dollarAmount = Double(amount) else {
+            alertMessage = "Invalid amount"
             showingAlert = true
             return
         }
         
         let tokenAmount = dollarAmount / token.price
-        guard tokenAmount <= walletManager.getBalance(for: token.symbol) else {
-            alertMessage = "Insufficient balance"
-            showingAlert = true
-            return
-        }
         
+        // Update the balance first
         if walletManager.buy(amount: tokenAmount, symbol: token.symbol) {
+            // If buy succeeds, add the transaction
+            walletManager.addTransaction(Transaction(
+                date: Date(),
+                fromToken: Token(symbol: "USD", name: "US Dollar", price: 1.0, priceChange24h: 0, volume24h: 0),
+                toToken: token,
+                fromAmount: dollarAmount,
+                toAmount: tokenAmount,
+                status: .succeeded,
+                source: "Buy"
+            ))
+            
             alertMessage = "Successfully bought \(String(format: "%.4f", tokenAmount)) \(token.symbol)"
             showingAlert = true
             amount = "0"

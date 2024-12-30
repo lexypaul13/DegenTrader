@@ -174,7 +174,7 @@ struct TokenListRow: View {
             
             // Price Info
             VStack(alignment: .trailing, spacing: 4) {
-                Text("$\(token.token.price, specifier: "%.2f")")
+                Text("$\(token.value, specifier: "%.2f")")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppTheme.colors.textPrimary)
                 
