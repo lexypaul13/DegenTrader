@@ -33,7 +33,6 @@ struct RecentActivityView: View {
                             Section {
                                 ForEach(transactions) { transaction in
                                     RecentActivityRow(transaction: transaction)
-                                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                                         .listRowBackground(Color.clear)
                                 }
                             } header: {
@@ -41,13 +40,11 @@ struct RecentActivityView: View {
                                     .font(.system(size: 15))
                                     .foregroundColor(.gray)
                                     .textCase(nil)
-                                    .padding(.leading, 16)
-                                    .padding(.bottom, 8)
+                                    .padding(.bottom, 3)
                             }
                         }
                     }
                     .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
                 }
             }
             .toolbar {
@@ -71,8 +68,7 @@ struct RecentActivityRow: View {
             HStack(spacing: 4) {
                 Text("Swapped")
                     .foregroundColor(.white)
-                Text("via \(transaction.source)")
-                    .foregroundColor(.gray)
+               
             }
             .font(.system(size: 15))
             
