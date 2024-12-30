@@ -34,17 +34,19 @@ struct RecentActivityView: View {
                                 ForEach(transactions) { transaction in
                                     RecentActivityRow(transaction: transaction)
                                         .listRowBackground(Color.clear)
+                                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                        .listRowSeparator(.hidden)
                                 }
                             } header: {
                                 Text(date)
                                     .font(.system(size: 15))
                                     .foregroundColor(.gray)
                                     .textCase(nil)
-                                    .padding(.bottom, 3)
                             }
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
             .toolbar {
@@ -63,58 +65,57 @@ struct RecentActivityRow: View {
     let transaction: Transaction
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Top row: "Swapped via Jupiter"
-            HStack(spacing: 4) {
-                Text("Swapped")
-                    .foregroundColor(.white)
-               
-            }
-            .font(.system(size: 15))
-            
-            // Bottom row: Transaction details
-            HStack(alignment: .center) {
-                // Left side: Transaction icon
-                ZStack {
-                    Circle()
-                        .fill(transaction.status == .succeeded ? Color(white: 0.15) : Color.red.opacity(0.15))
-                        .frame(width: 32, height: 32)
-                    
-                    Image(systemName: transaction.status == .succeeded ? "arrow.left.arrow.right" : "xmark")
-                        .font(.system(size: 14))
-                        .foregroundColor(transaction.status == .succeeded ? .white : .red)
-                }
+        HStack(spacing: 12) {
+            // Left: Transaction icon
+            ZStack {
+                Circle()
+                    .fill(transaction.status == .succeeded ? Color(white: 0.15) : Color.red.opacity(0.15))
+                    .frame(width: 40, height: 40)
                 
-                // Middle: Amount details
+                Image(systemName: transaction.status == .succeeded ? "arrow.left.arrow.right" : "xmark")
+                    .font(.system(size: 16))
+                    .foregroundColor(transaction.status == .succeeded ? .white : .red)
+            }
+            
+            // Middle: Title
+            Text("Swapped")
+                .foregroundColor(.white)
+                .font(.system(size: 16))
+            
+            Spacer()
+            
+            // Right: Amount details
+            VStack(alignment: .trailing, spacing: 6) {
+                // Received amount (green)
                 HStack(spacing: 4) {
-                    Text(formatAmount(transaction.fromAmount))
-                        .foregroundColor(.white)
-                    Text(transaction.fromToken.symbol)
-                        .foregroundColor(.gray)
-                    Text("→")
-                        .foregroundColor(.gray)
-                    Text(formatAmount(transaction.toAmount))
-                        .foregroundColor(.white)
+                    Text("+\(formatAmount(transaction.toAmount))")
+                        .foregroundColor(.green)
                     Text(transaction.toToken.symbol)
                         .foregroundColor(.gray)
                 }
-                .font(.system(size: 15))
                 
-                Spacer()
-                
-                // Right: Failed badge if needed
-                if transaction.status == .failed {
-                    Text("Failed")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.red)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.red.opacity(0.15))
-                        .cornerRadius(6)
+                // Sent amount (white)
+                HStack(spacing: 4) {
+                    Text("-\(formatAmount(transaction.fromAmount))")
+                        .foregroundColor(.white)
+                    Text(transaction.fromToken.symbol)
+                        .foregroundColor(.gray)
                 }
             }
+            .font(.system(size: 16))
+            
+            // Failed badge if needed
+            if transaction.status == .failed {
+                Text("Failed")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.red.opacity(0.15))
+                    .cornerRadius(6)
+            }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .padding(.horizontal, 16)
         .background(Color(white: 0.1))
         .cornerRadius(12)

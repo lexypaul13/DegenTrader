@@ -133,6 +133,9 @@ struct DashboardView: View {
                     TokenDetailView(token: token.token)
                 } label: {
                     TokenListRow(token: token)
+                        .padding(.leading)
+                        .padding(.trailing)
+
                 }
             }
         }
