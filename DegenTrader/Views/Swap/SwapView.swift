@@ -13,6 +13,7 @@ struct SwapView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) private var presentationMode
     @FocusState private var focusedField: Field?
+    @StateObject private var walletManager = WalletManager.shared
     
     enum Field {
         case from, to
@@ -110,12 +111,15 @@ struct SwapView: View {
                     .opacity(isSwapping ? 0 : 1)
                     .animation(.easeInOut(duration: 0.3), value: isSwapping)
 
-                    Text("23,629.89647 \(selectedFromToken.symbol)")
-                        .font(.system(size: 15))
-                        .foregroundColor(AppTheme.colors.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                    // Balance display
+                    if let balance = walletManager.balances[selectedFromToken.symbol] {
+                        Text("\(balance, specifier: "%.8f") \(selectedFromToken.symbol)")
+                            .font(.system(size: 15))
+                            .foregroundColor(AppTheme.colors.textSecondary)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                    }
                 }
             }
             .padding(16)
@@ -236,6 +240,8 @@ struct CustomTextField: UIViewRepresentable {
         textField.keyboardType = .decimalPad
         textField.delegate = context.coordinator
         textField.text = text
+        textField.font = .systemFont(ofSize: 32, weight: .medium)
+        textField.textColor = .white
         
         // Create and set the input accessory view
         let percentageView = UIHostingController(rootView: 
