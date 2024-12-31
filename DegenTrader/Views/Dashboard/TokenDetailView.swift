@@ -8,18 +8,58 @@ struct TokenDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 32) {
-                // Token Amount Section
-                VStack(spacing: 8) {
-                    Text("\(String(format: "%.4f", walletManager.getBalance(for: token.symbol))) \(token.symbol)")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
+            VStack(spacing: 24) {
+                // Balance Section Header
+                Text("Your Balance")
+                    .font(.system(size: 24))
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                
+                // Balance Card
+                HStack(spacing: 12) {
+                    // Token Icon and Info
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(Color.black.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Image(token.symbol.lowercased())
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                    .foregroundColor(.white)
+                            )
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(token.name)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            Text("\(String(format: "%.5f", walletManager.getBalance(for: token.symbol))) \(token.symbol)")
+                                .font(.system(size: 14))
+                                .foregroundColor(.gray)
+                        }
+                    }
                     
-                    Text(String(format: "$%.2f", walletManager.getBalance(for: token.symbol) * token.price))
-                        .font(.system(size: 24))
-                        .foregroundColor(.gray)
+                    Spacer()
+                    
+                    // Price Info
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("$\(String(format: "%.2f", walletManager.getBalance(for: token.symbol) * token.price))")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                        
+                        let priceChange = token.price * token.priceChange24h / 100.0
+                        Text((priceChange >= 0 ? "+" : "") + "$\(String(format: "%.8f", abs(priceChange)))")
+                            .font(.system(size: 14))
+                            .foregroundColor(priceChange >= 0 ? .green : .red)
+                    }
                 }
-                .padding(.top, 20)
+                .padding()
+                .background(AppTheme.colors.cardBackground)
+                .cornerRadius(12)
+                .padding(.horizontal)
                 
                 // Action Buttons
                 HStack(spacing: 30) {
@@ -76,80 +116,24 @@ struct TokenDetailView: View {
                         }
                     }
                 }
+                .padding(.top, 8)
                 
-                // Price Detail Section
+                // Info Section
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Price Detail")
+                    Text("Info")
                         .font(.system(size: 24))
                         .foregroundColor(.gray)
                     
                     VStack(spacing: 0) {
-                        // Token Header
-                        HStack {
-                            // Token Icon
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 40, height: 40)
-                            
-                            Text(token.name)
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                            
-                            Spacer()
-                            
-                            Text("24h Price")
-                                .font(.system(size: 18))
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        
-                        Divider()
-                            .background(Color.gray.opacity(0.3))
-                        
-                        // Price Info
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(String(format: "$%.8f", token.price))
-                                .font(.system(size: 32, weight: .medium))
-                                .foregroundColor(.white)
-                            
-                            HStack(spacing: 8) {
-                                Text(String(format: "+$%.8f", abs(token.priceChange24h)))
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.green)
-                                
-                                Text(String(format: "+%.2f%%", token.priceChange24h))
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.green.opacity(0.2))
-                                    .cornerRadius(6)
-                            }
-                            
-                            // Price Chart Placeholder
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(height: 100)
-                                .cornerRadius(8)
-                        }
-                        .padding(16)
-                    }
-                    .background(AppTheme.colors.cardBackground)
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal)
-                
-                // About Token Section
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("About \(token.name)")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.gray)
-                    
-                    VStack(spacing: 24) {
-                        TokenInfoRow(title: "Token Name", value: "\(token.name) (\(token.symbol))")
-                        TokenInfoRow(title: "Network", value: "Solana")
                         TokenInfoRow(title: "Mint", value: "8v2W...pump")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Market Cap", value: "$18.23K")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Total Supply", value: "999.11M")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Circulating Supply", value: "999.11M")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Holders", value: "13,315")
                     }
                     .padding(16)
                     .background(AppTheme.colors.cardBackground)
@@ -157,29 +141,49 @@ struct TokenDetailView: View {
                 }
                 .padding(.horizontal)
                 
-                // Transaction History Section
-                TransactionHistorySection(transactions: [
-                    Transaction(
-                        date: Date(),
-                        fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
-                        toToken: token,
-                        fromAmount: 0.04291,
-                        toAmount: 7133.29855,
-                        status: .succeeded,
-                        source: "Phantom"
-                    ),
-                    Transaction(
-                        date: Date().addingTimeInterval(-3600),
-                        fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
-                        toToken: token,
-                        fromAmount: 0.02145,
-                        toAmount: 3278.46639,
-                        status: .succeeded,
-                        source: "Phantom"
-                    )
-                ])
+                // 24h Performance Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("24h Performance")
+                        .font(.system(size: 24))
+                        .foregroundColor(.gray)
+                    
+                    VStack(spacing: 0) {
+                        TokenPerformanceRow(title: "Volume", value: "$101.19", change: 106.87)
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenPerformanceRow(title: "Trades", value: "11", change: 10.00)
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenPerformanceRow(title: "Traders", value: "11", change: 37.50)
+                    }
+                    .padding(16)
+                    .background(AppTheme.colors.cardBackground)
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                
+                // Security Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Security")
+                        .font(.system(size: 24))
+                        .foregroundColor(.gray)
+                    
+                    VStack(spacing: 0) {
+                        TokenInfoRow(title: "Top 10 Holders", value: "68.58%")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Mintable", value: "No")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Mutable Info", value: "No")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Ownership Renounced", value: "No")
+                        Divider().background(Color.gray.opacity(0.3))
+                        TokenInfoRow(title: "Update Authority", value: "TSLvd...1eokM")
+                    }
+                    .padding(16)
+                    .background(AppTheme.colors.cardBackground)
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal)
             }
-            .padding(.bottom, 70)
+            .padding(.vertical, 24)
         }
         .background(AppTheme.colors.background)
         .navigationBarTitleDisplayMode(.inline)
@@ -220,6 +224,31 @@ struct TokenInfoRow: View {
                 .font(.system(size: 16))
                 .foregroundColor(.white)
         }
+        .padding(.vertical, 12)
+    }
+}
+
+struct TokenPerformanceRow: View {
+    let title: String
+    let value: String
+    let change: Double
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 16))
+                .foregroundColor(.gray)
+            Spacer()
+            HStack(spacing: 8) {
+                Text(value)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                Text("\(String(format: "%.2f", change))%")
+                    .font(.system(size: 14))
+                    .foregroundColor(.green)
+            }
+        }
+        .padding(.vertical, 12)
     }
 }
 
