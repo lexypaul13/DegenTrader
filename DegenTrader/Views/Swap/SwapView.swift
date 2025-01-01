@@ -38,21 +38,27 @@ struct SwapView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         youPaySection
+                            .frame(maxWidth: .infinity)
                         swapButton
-                            .padding(.vertical, -8)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity)
                         youReceiveSection
+                            .frame(maxWidth: .infinity)
                     }
-                    .padding(20)
+                    .padding(.horizontal, 0)
+                    .padding(.vertical, 16)
                 }
+                .scrollDisabled(true)
                 
                 // Continue button positioned at absolute bottom
                 VStack {
                     Spacer()
                     continueButton
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 16)
+                        .padding(.horizontal, 0)
+                        .padding(.bottom, 20)
+                        .frame(maxWidth: .infinity)
                 }
-                .ignoresSafeArea(.keyboard)  // This ensures it stays behind keyboard
+                .ignoresSafeArea(.keyboard)
             }
         }
         .sheet(isPresented: $showFromTokenSelect) {
@@ -77,93 +83,80 @@ struct SwapView: View {
         }
     }
     
-    private var mainContent: some View {
-        VStack(spacing: 24) {
-            youPaySection
-            swapButton
-            youReceiveSection
-            Spacer(minLength: 200)
-        }
-        .padding(20)
-    }
+
     
     private var youPaySection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("You Pay")
-                    .font(.system(size: 16))
-                    .foregroundColor(AppTheme.colors.textSecondary)
-                    .padding(.bottom, 4)
+        VStack(alignment: .center, spacing: 8) {
+            Text("You Pay")
+                .font(.system(size: 16))
+                .foregroundColor(AppTheme.colors.textSecondary)
+                .padding(.bottom, 4)
 
-                VStack(spacing: 4) {
-                    HStack {
-                        CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
-                            .font(.system(size: 32, weight: .medium))
-                            .foregroundColor(.white)
+            VStack(spacing: 10) {
+                HStack(spacing: 12) {
+                    CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .frame(maxWidth: .infinity)
 
-                        Spacer()
-
-                        Button(action: { showFromTokenSelect = true }) {
-                            TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
-                        }
-                    }
-                    .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
-                    .opacity(isSwapping ? 0 : 1)
-                    .animation(.easeInOut(duration: 0.3), value: isSwapping)
-
-                    // Balance display
-                    if let balance = walletManager.balances[selectedFromToken.symbol] {
-                        Text("\(balance, specifier: "%.8f") \(selectedFromToken.symbol)")
-                            .font(.system(size: 15))
-                            .foregroundColor(AppTheme.colors.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
+                    Button(action: { showFromTokenSelect = true }) {
+                        TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
                     }
                 }
-            }
-            .padding(16)
-            .background(Color(hex: "1C1C1E"))
-            .cornerRadius(16)
-        }
-    }
-    
-    private var youReceiveSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("You Receive")
-                    .font(.system(size: 16))
-                    .foregroundColor(AppTheme.colors.textSecondary)
-                    .padding(.bottom, 4)
+                .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
+                .opacity(isSwapping ? 0 : 1)
+                .animation(.easeInOut(duration: 0.3), value: isSwapping)
 
-                VStack(spacing: 4) {
-                    HStack {
-                        CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
-                            .font(.system(size: 32, weight: .medium))
-                            .foregroundColor(.white)
-
-                        Spacer()
-
-                        Button(action: { showToTokenSelect = true }) {
-                            TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
-                        }
-                    }
-                    .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
-                    .opacity(isSwapping ? 0 : 1)
-                    .animation(.easeInOut(duration: 0.3), value: isSwapping)
-
-                    Text("1234244 \(selectedToToken.symbol)")
+                if let balance = walletManager.balances[selectedFromToken.symbol] {
+                    Text("\(balance, specifier: "%.8f") \(selectedFromToken.symbol)")
                         .font(.system(size: 15))
                         .foregroundColor(AppTheme.colors.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.top, 4)
                 }
             }
-            .padding(16)
-            .background(Color(hex: "1C1C1E"))
-            .cornerRadius(16)
         }
+        .padding(16)
+        .background(Color(hex: "1C1C1E"))
+        .cornerRadius(16)
+    }
+    
+    private var youReceiveSection: some View {
+        VStack(alignment: .center, spacing: 8) {
+            Text("You Receive")
+                .font(.system(size: 16))
+                .foregroundColor(AppTheme.colors.textSecondary)
+                .padding(.bottom, 4)
+
+            VStack(spacing: 10) {
+                HStack(spacing: 12) {
+                    CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .frame(maxWidth: .infinity)
+
+                    Button(action: { showToTokenSelect = true }) {
+                        TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
+                    }
+                }
+                .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
+                .opacity(isSwapping ? 0 : 1)
+                .animation(.easeInOut(duration: 0.3), value: isSwapping)
+
+                Text("1234244 \(selectedToToken.symbol)")
+                    .font(.system(size: 15))
+                    .foregroundColor(AppTheme.colors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.top, 4)
+            }
+        }
+        .padding(16)
+        .background(Color(hex: "1C1C1E"))
+        .cornerRadius(16)
     }
     
     private var swapButton: some View {
@@ -190,7 +183,7 @@ struct SwapView: View {
         .foregroundColor(Color(hex: "1C1C1E"))
         .frame(maxWidth: .infinity)
         .frame(height: 56)
-        .background(Color(hex: "3A3A3C"))
+        .background(AppTheme.colors.accent)
         .cornerRadius(28)
     }
 
