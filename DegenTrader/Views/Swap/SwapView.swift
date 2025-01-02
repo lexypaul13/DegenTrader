@@ -30,37 +30,23 @@ struct SwapView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
             ZStack {
                 AppTheme.colors.background.ignoresSafeArea()
-                
-                // Main content
-                ScrollView {
                     VStack(spacing: 16) {
                         youPaySection
-                            .frame(maxWidth: .infinity)
+                            
                         swapButton
                             .padding(.vertical, 10)
                             .frame(maxWidth: .infinity)
                         youReceiveSection
-                            .frame(maxWidth: .infinity)
+                            .padding(.bottom, 10)
+                        continueButton
+                            .ignoresSafeArea(.keyboard)
+
                     }
-                    .padding(.horizontal, 0)
-                    .padding(.vertical, 16)
-                }
-                .scrollDisabled(true)
-                
-                // Continue button positioned at absolute bottom
-                VStack {
-                    Spacer()
-                    continueButton
-                        .padding(.horizontal, 0)
-                        .padding(.bottom, 20)
-                        .frame(maxWidth: .infinity)
-                }
-                .ignoresSafeArea(.keyboard)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 100)
             }
-        }
         .sheet(isPresented: $showFromTokenSelect) {
             TokenSelectView(selectedToken: $selectedFromToken)
         }
@@ -86,25 +72,26 @@ struct SwapView: View {
 
     
     private var youPaySection: some View {
-        VStack(alignment: .center, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("You Pay")
                 .font(.system(size: 16))
                 .foregroundColor(AppTheme.colors.textSecondary)
                 .padding(.bottom, 4)
 
             VStack(spacing: 10) {
-                HStack(spacing: 12) {
-                    CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                        .frame(maxWidth: .infinity)
+                GeometryReader { geometry in
+                    HStack(spacing: 12) {
+                        CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
+                            .frame(width: geometry.size.width - 140)  // Account for button width and spacing
+                            .clipped()
 
-                    Button(action: { showFromTokenSelect = true }) {
-                        TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
+                        Button(action: { showFromTokenSelect = true }) {
+                            TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
+                        }
+                        .frame(width: 120)
                     }
                 }
+                .frame(height: 40)  // Fixed height for the HStack
                 .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
                 .opacity(isSwapping ? 0 : 1)
                 .animation(.easeInOut(duration: 0.3), value: isSwapping)
@@ -124,25 +111,26 @@ struct SwapView: View {
     }
     
     private var youReceiveSection: some View {
-        VStack(alignment: .center, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("You Receive")
                 .font(.system(size: 16))
                 .foregroundColor(AppTheme.colors.textSecondary)
                 .padding(.bottom, 4)
 
             VStack(spacing: 10) {
-                HStack(spacing: 12) {
-                    CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                        .frame(maxWidth: .infinity)
+                GeometryReader { geometry in
+                    HStack(spacing: 12) {
+                        CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
+                            .frame(width: geometry.size.width - 140)  // Account for button width and spacing
+                            .clipped()
 
-                    Button(action: { showToTokenSelect = true }) {
-                        TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
+                        Button(action: { showToTokenSelect = true }) {
+                            TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
+                        }
+                        .frame(width: 120)
                     }
                 }
+                .frame(height: 40)  // Fixed height for the HStack
                 .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
                 .opacity(isSwapping ? 0 : 1)
                 .animation(.easeInOut(duration: 0.3), value: isSwapping)
@@ -235,6 +223,16 @@ struct CustomTextField: UIViewRepresentable {
         textField.text = text
         textField.font = .systemFont(ofSize: 32, weight: .medium)
         textField.textColor = .white
+        textField.adjustsFontSizeToFitWidth = false
+        textField.textAlignment = .left
+        
+        // Set up text truncation
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 32, weight: .medium),
+            .foregroundColor: UIColor.white
+        ]
+        let attributedText = NSAttributedString(string: text, attributes: attributes)
+        textField.attributedText = attributedText
         
         // Create and set the input accessory view
         let percentageView = UIHostingController(rootView: 
@@ -257,7 +255,12 @@ struct CustomTextField: UIViewRepresentable {
     
     func updateUIView(_ uiView: UITextField, context: Context) {
         if uiView.text != text {
-            uiView.text = text
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 32, weight: .medium),
+                .foregroundColor: UIColor.white
+            ]
+            let attributedText = NSAttributedString(string: text, attributes: attributes)
+            uiView.attributedText = attributedText
         }
     }
     
@@ -287,6 +290,11 @@ struct CustomTextField: UIViewRepresentable {
             let allowedCharacters = CharacterSet(charactersIn: "0123456789.")
             let characterSet = CharacterSet(charactersIn: string)
             guard allowedCharacters.isSuperset(of: characterSet) else {
+                return false
+            }
+            
+            // Limit the total length
+            if updatedText.count > 20 {
                 return false
             }
             
