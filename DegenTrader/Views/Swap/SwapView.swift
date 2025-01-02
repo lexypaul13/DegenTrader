@@ -32,20 +32,20 @@ struct SwapView: View {
     var body: some View {
             ZStack {
                 AppTheme.colors.background.ignoresSafeArea()
-                    VStack(spacing: 16) {
+                    VStack{
                         youPaySection
                             
                         swapButton
                             .padding(.vertical, 10)
                             .frame(maxWidth: .infinity)
                         youReceiveSection
-                            .padding(.bottom, 10)
+                            .padding(.bottom, 40)
                         continueButton
                             .ignoresSafeArea(.keyboard)
 
                     }
                     .padding(.horizontal, 10)
-                    .padding(.bottom, 100)
+                    .padding(.bottom, 150)
             }
         .sheet(isPresented: $showFromTokenSelect) {
             TokenSelectView(selectedToken: $selectedFromToken)
