@@ -45,7 +45,7 @@ struct SwapView: View {
 
                     }
                     .padding(.horizontal, 10)
-                    .padding(.bottom, 150)
+                   
             }
         .sheet(isPresented: $showFromTokenSelect) {
             TokenSelectView(selectedToken: $selectedFromToken)
