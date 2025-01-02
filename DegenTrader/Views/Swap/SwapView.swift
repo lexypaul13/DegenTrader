@@ -82,27 +82,27 @@ struct SwapView: View {
                 GeometryReader { geometry in
                     HStack(spacing: 12) {
                         CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
-                            .frame(width: geometry.size.width - 140)  // Account for button width and spacing
+                            .frame(width: geometry.size.width - 160)  // Increased space for token button
                             .clipped()
 
                         Button(action: { showFromTokenSelect = true }) {
                             TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
                         }
-                        .frame(width: 120)
+                        .frame(minWidth: 140)  // Minimum width for token button
                     }
                 }
-                .frame(height: 40)  // Fixed height for the HStack
+                .frame(height: 40)
                 .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
                 .opacity(isSwapping ? 0 : 1)
                 .animation(.easeInOut(duration: 0.3), value: isSwapping)
 
-                if let balance = walletManager.balances[selectedFromToken.symbol] {
-                    Text("\(balance, specifier: "%.8f") \(selectedFromToken.symbol)")
+                HStack {
+                    Spacer()
+                    Text("\(walletManager.balances[selectedFromToken.symbol] ?? 0) \(selectedFromToken.symbol)")
                         .font(.system(size: 15))
-                        .foregroundColor(AppTheme.colors.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.top, 4)
+                        .foregroundColor(.white)
                 }
+                .padding(.trailing, 16)
             }
         }
         .padding(16)
@@ -121,25 +121,27 @@ struct SwapView: View {
                 GeometryReader { geometry in
                     HStack(spacing: 12) {
                         CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
-                            .frame(width: geometry.size.width - 140)  // Account for button width and spacing
+                            .frame(width: geometry.size.width - 160)  // Increased space for token button
                             .clipped()
 
                         Button(action: { showToTokenSelect = true }) {
                             TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
                         }
-                        .frame(width: 120)
+                        .frame(minWidth: 140)  // Minimum width for token button
                     }
                 }
-                .frame(height: 40)  // Fixed height for the HStack
+                .frame(height: 40)
                 .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
                 .opacity(isSwapping ? 0 : 1)
                 .animation(.easeInOut(duration: 0.3), value: isSwapping)
 
-                Text("1234244 \(selectedToToken.symbol)")
-                    .font(.system(size: 15))
-                    .foregroundColor(AppTheme.colors.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.top, 4)
+                HStack {
+                    Spacer()
+                    Text("\(walletManager.balances[selectedToToken.symbol] ?? 0) \(selectedToToken.symbol)")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white)
+                }
+                .padding(.trailing, 16)
             }
         }
         .padding(16)
