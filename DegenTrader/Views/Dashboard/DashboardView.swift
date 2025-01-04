@@ -110,13 +110,6 @@ struct DashboardView: View {
                 }
             }
             
-            // More Button
-            Button(action: {}) {
-                ActionButton(
-                    imageName: "ellipsis",
-                    title: "More"
-                )
-            }
         }
         .padding(.bottom, 32)
     }

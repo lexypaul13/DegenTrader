@@ -198,7 +198,7 @@ struct SwapView: View {
     
     private func handlePercentage(_ percentage: Double) {
         if focusedField == .from {
-            let maxAmount = selectedFromToken.price * 100  
+            let maxAmount = selectedFromToken.price * 100
             fromAmount = String(format: "%.8f", maxAmount * percentage)
         } else if focusedField == .to {
             let maxAmount = selectedToToken.price * 100
