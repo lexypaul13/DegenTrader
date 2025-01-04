@@ -68,12 +68,14 @@ struct AlertsView: View {
                                 .padding(.vertical, 8)
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
                                 
                                 // Alert cards
                                 ForEach(alertsManager.alertsForToken(token)) { alert in
                                     AlertCard(alert: alert)
                                         .listRowInsets(EdgeInsets())
                                         .listRowBackground(Color.clear)
+                                        .listRowSeparator(.hidden)
                                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                             Button(role: .destructive) {
                                                 withAnimation {
@@ -87,6 +89,8 @@ struct AlertsView: View {
                                         }
                                 }
                             }
+                            .listSectionSeparator(.hidden)
+                            .padding(.bottom, 16)  // Add spacing between sections
                         }
                     }
                     .listStyle(.plain)

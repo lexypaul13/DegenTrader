@@ -79,17 +79,14 @@ struct SwapView: View {
                 .padding(.bottom, 4)
 
             VStack(spacing: 10) {
-                GeometryReader { geometry in
-                    HStack(spacing: 12) {
-                        CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
-                            .frame(width: geometry.size.width - 160)  // Increased space for token button
-                            .clipped()
-
-                        Button(action: { showFromTokenSelect = true }) {
-                            TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
-                        }
-                        .frame(minWidth: 140)  // Minimum width for token button
+                HStack(spacing: 12) {
+                    CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
+                        .frame(maxWidth: .infinity, maxHeight: 40)
+                    
+                    Button(action: { showFromTokenSelect = true }) {
+                        TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
                     }
+                    .frame(width: 140)
                 }
                 .frame(height: 40)
                 .offset(x: isSwapping ? UIScreen.main.bounds.width : 0)
@@ -118,17 +115,14 @@ struct SwapView: View {
                 .padding(.bottom, 4)
 
             VStack(spacing: 10) {
-                GeometryReader { geometry in
-                    HStack(spacing: 12) {
-                        CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
-                            .frame(width: geometry.size.width - 160)  // Increased space for token button
-                            .clipped()
-
-                        Button(action: { showToTokenSelect = true }) {
-                            TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
-                        }
-                        .frame(minWidth: 140)  // Minimum width for token button
+                HStack(spacing: 12) {
+                    CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
+                        .frame(maxWidth: .infinity, maxHeight: 40)
+                    
+                    Button(action: { showToTokenSelect = true }) {
+                        TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
                     }
+                    .frame(width: 140)
                 }
                 .frame(height: 40)
                 .offset(x: isSwapping ? -UIScreen.main.bounds.width : 0)
@@ -204,10 +198,10 @@ struct SwapView: View {
     
     private func handlePercentage(_ percentage: Double) {
         if focusedField == .from {
-            let maxAmount = selectedFromToken.price * 100  // Using 100 as example max balance
+            let maxAmount = selectedFromToken.price * 100  
             fromAmount = String(format: "%.8f", maxAmount * percentage)
         } else if focusedField == .to {
-            let maxAmount = selectedToToken.price * 100  // Using 100 as example max balance
+            let maxAmount = selectedToToken.price * 100
             toAmount = String(format: "%.8f", maxAmount * percentage)
         }
     }
@@ -225,19 +219,18 @@ struct CustomTextField: UIViewRepresentable {
         textField.text = text
         textField.font = .systemFont(ofSize: 32, weight: .medium)
         textField.textColor = .white
-        textField.adjustsFontSizeToFitWidth = false
         textField.textAlignment = .left
+        textField.backgroundColor = .clear
         
-        // Set up text truncation
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 32, weight: .medium),
-            .foregroundColor: UIColor.white
-        ]
-        let attributedText = NSAttributedString(string: text, attributes: attributes)
-        textField.attributedText = attributedText
+        // Configure text field
+        textField.adjustsFontSizeToFitWidth = true
+        textField.minimumFontSize = 16
+        textField.borderStyle = .none
+        textField.autocorrectionType = .no
+        textField.autocapitalizationType = .none
+        textField.spellCheckingType = .no
         
-        // Create and set the input accessory view
-        let percentageView = UIHostingController(rootView: 
+        let percentageView = UIHostingController(rootView:
             PercentageButtonsView(handlePercentage: { percentage in
                 let maxAmount = 100.0 // Example max amount
                 text = String(format: "%.8f", maxAmount * percentage)
@@ -248,7 +241,6 @@ struct CustomTextField: UIViewRepresentable {
         percentageView.view.backgroundColor = .clear
         textField.inputAccessoryView = percentageView.view
         
-        // Set a fixed size for the input accessory view
         let size = CGSize(width: UIScreen.main.bounds.width, height: 50)
         percentageView.view.frame = CGRect(origin: .zero, size: size)
         
@@ -257,12 +249,9 @@ struct CustomTextField: UIViewRepresentable {
     
     func updateUIView(_ uiView: UITextField, context: Context) {
         if uiView.text != text {
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 32, weight: .medium),
-                .foregroundColor: UIColor.white
-            ]
-            let attributedText = NSAttributedString(string: text, attributes: attributes)
-            uiView.attributedText = attributedText
+            uiView.text = text
+            let newPosition = uiView.endOfDocument
+            uiView.selectedTextRange = uiView.textRange(from: newPosition, to: newPosition)
         }
     }
     
@@ -288,15 +277,16 @@ struct CustomTextField: UIViewRepresentable {
                 return false
             }
             
+            // Count total digits (excluding decimal point)
+            let totalDigits = updatedText.filter { $0.isNumber }.count
+            if totalDigits > 18 {
+                return false
+            }
+            
             // Only allow numbers and decimal point
             let allowedCharacters = CharacterSet(charactersIn: "0123456789.")
             let characterSet = CharacterSet(charactersIn: string)
             guard allowedCharacters.isSuperset(of: characterSet) else {
-                return false
-            }
-            
-            // Limit the total length
-            if updatedText.count > 20 {
                 return false
             }
             
@@ -305,6 +295,10 @@ struct CustomTextField: UIViewRepresentable {
             }
             
             return true
+        }
+        
+        func textFieldDidBeginEditing(_ textField: UITextField) {
+            self.parent.focusedField.wrappedValue = self.parent.field
         }
     }
 }

@@ -60,13 +60,6 @@ struct PriceAlertView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Drag Indicator
-            Capsule()
-                .fill(Color.gray.opacity(0.5))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
-                .padding(.bottom, 20)
-            
             // Close Button
             Button("Close") {
                 dismiss()
@@ -75,7 +68,7 @@ struct PriceAlertView: View {
             .foregroundColor(.yellow)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
-            .padding(.bottom, 20)
+            .padding(.vertical, 20)
             
             // Content
             VStack(spacing: 24) {
