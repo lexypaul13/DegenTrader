@@ -61,6 +61,12 @@ struct TokenDetailView: View {
                 .cornerRadius(12)
                 .padding(.horizontal)
                 
+                // Chart Section
+                TokenChartView(token: token)
+                    .background(AppTheme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                
                 // Action Buttons
                 HStack(spacing: 30) {
                     // Swap Button

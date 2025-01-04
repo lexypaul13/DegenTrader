@@ -1,6 +1,27 @@
 # DegenTrader
 
-A Solana-based decentralized trading application for cryptocurrency trading and portfolio management.
+A Solana-based meme coin trading simulator that allows users to practice trading in a risk-free environment. Perfect for learning the dynamics of meme coin trading without putting real money at risk.
+
+## Overview
+DegenTrader is designed to simulate the experience of trading Solana-based meme coins, helping users understand market dynamics, practice trading strategies, and get familiar with DeFi interfaces without any financial risk. The app provides a realistic trading environment with mock balances and real-time market simulations.
+
+## Key Features
+- Risk-free meme coin trading simulation
+- Real-time price tracking simulation
+- Practice portfolio management
+- Token swapping with simulated liquidity
+- Price alerts for learning market timing
+- Recent activity tracking for trade analysis
+- Market overview for understanding trends
+- Detailed token analytics for research practice
+
+## Educational Benefits
+- Learn DeFi trading mechanics safely
+- Practice portfolio management strategies
+- Understand price impact and slippage
+- Experiment with different trading strategies
+- Get familiar with crypto trading interfaces
+- Study market trends without financial risk
 
 ## Features
 - Real-time token price tracking
