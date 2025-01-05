@@ -3,14 +3,14 @@ import Charts
 
 struct TokenChartView: View {
     let token: Token
-    @State private var selectedInterval: ChartInterval = .day
+    @State private var selectedInterval: ChartInterval = .all
     @State private var selectedPoint: ChartPoint?
     @State private var chartData: [ChartPoint] = []
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 16) {
             // Price Display
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .center, spacing: 8) {
                 Text(selectedPoint?.formattedPrice ?? "$\(String(format: "%.2f", token.price))")
                     .font(.system(size: 48, weight: .semibold))
                     .foregroundColor(.white)
@@ -26,10 +26,10 @@ struct TokenChartView: View {
                         .cornerRadius(8)
                         .foregroundColor(Color.green)
                 }
+                .font(.system(size: 16))
             }
-            .padding(.horizontal)
-            .padding(.bottom, 16)
-            
+            .padding(.bottom, 50)
+           
             // Chart
             Chart {
                 ForEach(chartData) { point in
@@ -54,10 +54,8 @@ struct TokenChartView: View {
             .chartPlotStyle { content in
                 content
                     .background(AppTheme.colors.background)
-                    .padding([.bottom, .top], 0)
             }
-            .frame(height: 250)
-            .padding(.bottom, -32)
+            .frame(height: 70)
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -91,6 +89,8 @@ struct TokenChartView: View {
                 .padding(.horizontal)
             }
         }
+        .padding(.top, 16)
+        .background(AppTheme.colors.background)
         .onAppear {
             updateChartData()
         }
@@ -135,4 +135,18 @@ extension ChartInterval {
         case .all: return "ALL"
         }
     }
-} 
+}
+
+#Preview {
+    TokenChartView(
+        token: Token(
+            symbol: "SOL",
+            name: "Solana",
+            price: 215.91,
+            priceChange24h: 27_408.44,
+            volume24h: 1_000_000
+        )
+    )
+    .background(AppTheme.colors.background)
+    .preferredColorScheme(.dark)
+}

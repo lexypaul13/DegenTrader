@@ -259,15 +259,16 @@ struct TokenPerformanceRow: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         TokenDetailView(
             token: Token(
-                symbol: "JEFFY",
-                name: "Jeffy",
-                price: 0.00003851,
-                priceChange24h: 29.05,
+                symbol: "SOL",
+                name: "Solana",
+                price: 95.42,
+                priceChange24h: 2.50,
                 volume24h: 1_000_000
             )
         )
+        .preferredColorScheme(.dark)
     }
 } 
