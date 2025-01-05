@@ -4,58 +4,31 @@ import Charts
 struct TokenChartView: View {
     let token: Token
     @State private var selectedInterval: ChartInterval = .day
-    @State private var chartData: [ChartPoint] = []
     @State private var selectedPoint: ChartPoint?
+    @State private var chartData: [ChartPoint] = []
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(alignment: .leading, spacing: 0) {
             // Price Display
-            VStack(alignment: .leading, spacing: 8) {
-                if let selectedPoint = selectedPoint {
-                    Text("$\(String(format: "%.2f", selectedPoint.price))")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(.white)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(selectedPoint?.formattedPrice ?? "$\(String(format: "%.2f", token.price))")
+                    .font(.system(size: 48, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                HStack(spacing: 8) {
+                    Text("+$\(String(format: "%.2f", token.price * token.priceChange24h / 100.0))")
+                        .foregroundColor(Color.green)
                     
-                    Text(selectedPoint.timestamp.formatted(date: .abbreviated, time: .shortened))
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                } else {
-                    Text("$\(String(format: "%.2f", token.price))")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(.white)
-                    
-                    Text("Current Price")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                    Text("+\(String(format: "%.2f", token.priceChange24h))%")
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.2))
+                        .cornerRadius(8)
+                        .foregroundColor(Color.green)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
-            
-            // Interval Selector
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(ChartInterval.allCases, id: \.self) { interval in
-                        Button(action: {
-                            selectedInterval = interval
-                            updateChartData()
-                        }) {
-                            Text(interval.rawValue)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(selectedInterval == interval ? .white : .gray)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(
-                                    selectedInterval == interval ?
-                                    AppTheme.colors.accent.opacity(0.2) :
-                                    Color.clear
-                                )
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-                .padding(.horizontal)
-            }
+            .padding(.bottom, 16)
             
             // Chart
             Chart {
@@ -64,77 +37,59 @@ struct TokenChartView: View {
                         x: .value("Time", point.timestamp),
                         y: .value("Price", point.price)
                     )
-                    .foregroundStyle(AppTheme.colors.accent.gradient)
-                    
-                    if let selectedPoint = selectedPoint,
-                       selectedPoint.id == point.id {
-                        PointMark(
-                            x: .value("Time", point.timestamp),
-                            y: .value("Price", point.price)
-                        )
-                        .foregroundStyle(AppTheme.colors.accent)
-                        .symbolSize(100)
-                    }
+                    .foregroundStyle(Color.green)
+                    .lineStyle(StrokeStyle(lineWidth: 2.5))
+                }
+                
+                if let selectedPoint = selectedPoint {
+                    PointMark(
+                        x: .value("Time", selectedPoint.timestamp),
+                        y: .value("Price", selectedPoint.price)
+                    )
+                    .foregroundStyle(Color.white)
                 }
             }
-            .chartXAxis {
-                AxisMarks(position: .bottom) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(formatAxisDate(date))
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartPlotStyle { content in
+                content
+                    .background(AppTheme.colors.background)
+                    .padding([.bottom, .top], 0)
+            }
+            .frame(height: 250)
+            .padding(.bottom, -32)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        updateSelectedPoint(at: value.location)
+                    }
+                    .onEnded { _ in
+                        selectedPoint = nil
+                    }
+            )
+            
+            // Interval Selector
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 24) {
+                    ForEach(ChartInterval.allCases, id: \.self) { interval in
+                        Button(action: {
+                            selectedInterval = interval
+                            updateChartData()
+                        }) {
+                            Text(interval.title)
+                                .foregroundColor(selectedInterval == interval ? .white : .gray)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 4)
+                                .background(
+                                    selectedInterval == interval ?
+                                    AppTheme.colors.cardBackground : Color.clear
+                                )
+                                .cornerRadius(8)
                         }
                     }
                 }
+                .padding(.horizontal)
             }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if let price = value.as(Double.self) {
-                            Text("$\(String(format: "%.2f", price))")
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                }
-            }
-            .chartOverlay { proxy in
-                GeometryReader { geometry in
-                    Rectangle()
-                        .fill(.clear)
-                        .contentShape(Rectangle())
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    let currentX = value.location.x
-                                    guard currentX >= 0,
-                                          currentX <= geometry.size.width,
-                                          let date = proxy.value(atX: currentX) as Date?
-                                    else {
-                                        return
-                                    }
-                                    
-                                    // Find closest point
-                                    if let closest = chartData.min(by: {
-                                        abs($0.timestamp.timeIntervalSince(date)) <
-                                        abs($1.timestamp.timeIntervalSince(date))
-                                    }) {
-                                        selectedPoint = closest
-                                    }
-                                }
-                                .onEnded { _ in
-                                    selectedPoint = nil
-                                }
-                        )
-                }
-            }
-            .frame(height: 300)
-            .padding()
         }
         .onAppear {
             updateChartData()
@@ -148,16 +103,36 @@ struct TokenChartView: View {
         )
     }
     
-    private func formatAxisDate(_ date: Date) -> String {
-        switch selectedInterval {
-        case .day:
-            return date.formatted(.dateTime.hour())
-        case .week, .month:
-            return date.formatted(.dateTime.month().day())
-        case .threeMonths, .year:
-            return date.formatted(.dateTime.month())
-        case .all:
-            return date.formatted(.dateTime.year())
+    private func updateSelectedPoint(at location: CGPoint) {
+        guard !chartData.isEmpty else { return }
+        
+        let step = 250.0 / CGFloat(chartData.count - 1)
+        let index = min(
+            max(
+                Int(location.x / step),
+                0
+            ),
+            chartData.count - 1
+        )
+        selectedPoint = chartData[index]
+    }
+}
+
+extension ChartPoint {
+    var formattedPrice: String {
+        "$\(String(format: "%.2f", price))"
+    }
+}
+
+extension ChartInterval {
+    var title: String {
+        switch self {
+        case .day: return "1D"
+        case .week: return "1W"
+        case .month: return "1M"
+        case .threeMonths: return "3M"
+        case .year: return "1Y"
+        case .all: return "ALL"
         }
     }
 } 

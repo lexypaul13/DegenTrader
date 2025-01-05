@@ -13,6 +13,63 @@ struct TokenDetailView: View {
                 TokenChartView(token: token)
                     .padding(.top, 16)
                 
+                // Action Buttons
+                HStack(spacing: 30) {
+                    // Swap Button
+                    NavigationLink {
+                        SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))
+                    } label: {
+                        VStack(spacing: 8) {
+                            Capsule()
+                                .fill(AppTheme.colors.cardBackground)
+                                .frame(width: 100, height: 44)
+                                .overlay(
+                                    Image(systemName: "arrow.left.arrow.right")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.white)
+                                )
+                            Text("Swap")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color.gray)
+                        }
+                    }
+                    
+                    // Alert Button
+                    Button(action: { showPriceAlert = true }) {
+                        VStack(spacing: 8) {
+                            Capsule()
+                                .fill(AppTheme.colors.cardBackground)
+                                .frame(width: 100, height: 44)
+                                .overlay(
+                                    Image(systemName: "bell.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.white)
+                                )
+                            Text("Set Alert")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color.gray)
+                        }
+                    }
+                    
+                    // More Button
+                    Button(action: {}) {
+                        VStack(spacing: 8) {
+                            Capsule()
+                                .fill(AppTheme.colors.cardBackground)
+                                .frame(width: 100, height: 44)
+                                .overlay(
+                                    Image(systemName: "ellipsis")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.white)
+                                )
+                            Text("More")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color.gray)
+                        }
+                    }
+                }
+                .padding(.top, 8)
+                
                 // Balance Section
                 VStack(spacing: 16) {
                     Text("Your Balance")
@@ -131,63 +188,6 @@ struct TokenDetailView: View {
                     .cornerRadius(12)
                 }
                 .padding(.horizontal)
-                
-                // Action Buttons
-                HStack(spacing: 30) {
-                    // Swap Button
-                    NavigationLink {
-                        SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))
-                    } label: {
-                        VStack(spacing: 8) {
-                            Capsule()
-                                .fill(AppTheme.colors.cardBackground)
-                                .frame(width: 100, height: 44)
-                                .overlay(
-                                    Image(systemName: "arrow.left.arrow.right")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.white)
-                                )
-                            Text("Swap")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color.gray)
-                        }
-                    }
-                    
-                    // Alert Button
-                    Button(action: { showPriceAlert = true }) {
-                        VStack(spacing: 8) {
-                            Capsule()
-                                .fill(AppTheme.colors.cardBackground)
-                                .frame(width: 100, height: 44)
-                                .overlay(
-                                    Image(systemName: "bell.fill")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.white)
-                                )
-                            Text("Set Alert")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color.gray)
-                        }
-                    }
-                    
-                    // More Button
-                    Button(action: {}) {
-                        VStack(spacing: 8) {
-                            Capsule()
-                                .fill(AppTheme.colors.cardBackground)
-                                .frame(width: 100, height: 44)
-                                .overlay(
-                                    Image(systemName: "ellipsis")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.white)
-                                )
-                            Text("More")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color.gray)
-                        }
-                    }
-                }
-                .padding(.top, 8)
             }
             .padding(.vertical, 24)
         }
