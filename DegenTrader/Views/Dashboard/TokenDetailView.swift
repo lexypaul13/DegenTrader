@@ -202,9 +202,12 @@ struct TokenDetailView: View {
             }
             
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
+                Button(action: {
+                    dismiss()
+                }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.white)
+                        .imageScale(.large)
                 }
             }
         }

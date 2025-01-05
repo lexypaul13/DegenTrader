@@ -112,6 +112,11 @@ struct TokenChartView: View {
         .onAppear {
             updateChartData()
         }
+        .onDisappear {
+            // Clean up resources
+            chartData = []
+            selectedPoint = nil
+        }
     }
     
     private func updateChartData() {
