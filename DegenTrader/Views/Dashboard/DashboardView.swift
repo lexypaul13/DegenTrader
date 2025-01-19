@@ -6,7 +6,7 @@ struct DashboardView: View {
     @StateObject private var walletManager = WalletManager.shared
     @State private var showSearch = false
     @State private var showBalance = false
-    @State private var showBuyView = false
+    @State private var showBuyView =  false
     @State private var showSwapView = false
     @State private var selectedSwapToken: Token?
     
