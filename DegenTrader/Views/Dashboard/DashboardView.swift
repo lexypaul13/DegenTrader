@@ -1,4 +1,5 @@
 import SwiftUI
+import Alamofire
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
