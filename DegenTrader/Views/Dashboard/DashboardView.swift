@@ -49,10 +49,10 @@ struct DashboardView: View {
                         
                         HStack(spacing: 14) {
                             Text("$\(abs(viewModel.portfolio.profitLoss), specifier: "%.2f")")
-                                .foregroundColor(viewModel.portfolio.profitLoss >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                                .foregroundColor(viewModel.portfolio.profitLoss == 0 ? Color(white: 0.5) : (viewModel.portfolio.profitLoss > 0 ? AppTheme.colors.positive : AppTheme.colors.negative))
                             
                             Text("\(viewModel.portfolio.profitLossPercentage >= 0 ? "+" : "")\(viewModel.portfolio.profitLossPercentage, specifier: "%.2f")%")
-                                .foregroundColor(viewModel.portfolio.profitLossPercentage >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                                .foregroundColor(viewModel.portfolio.profitLossPercentage == 0 ? Color(white: 0.5) : (viewModel.portfolio.profitLossPercentage > 0 ? AppTheme.colors.positive : AppTheme.colors.negative))
                         }
                         .font(.system(size: 18))
                     }

@@ -6,12 +6,9 @@ struct SearchView: View {
     @State private var showSwapView = false
     @State private var selectedToken: Token?
     
-    // Mock recent tokens
-    let recentTokens = [
-        Token(symbol: "SOL", name: "Solana", price: 228.62, priceChange24h: -3.5, volume24h: 1_000_000),
-        Token(symbol: "USDT", name: "Tether USD", price: 1.00, priceChange24h: 0.01, volume24h: 500_000),
-        Token(symbol: "JitoSOL", name: "Jito Staked SOL", price: 263.83, priceChange24h: -3.54, volume24h: 750_000)
-    ]
+    // TODO: Replace with live data
+    @State public var trendingTokens: [Token] = []
+    @State public var recentTokens: [Token] = []
     
     var body: some View {
         NavigationStack {
@@ -44,42 +41,50 @@ struct SearchView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         // Recents Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("Recents")
-                                    .font(.title2)
-                                    .foregroundColor(AppTheme.colors.textPrimary)
-                                    .padding(.vertical, 2)
-                                
-                                Spacer()
-                                
-                                Button("Clear") {
-                                    // Clear action
+                        if !recentTokens.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("Recents")
+                                        .font(.title2)
+                                        .foregroundColor(AppTheme.colors.textPrimary)
+                                        .padding(.vertical, 2)
+                                    
+                                    Spacer()
+                                    
+                                    Button("Clear") {
+                                        recentTokens.removeAll()
+                                    }
+                                    .foregroundColor(AppTheme.colors.textSecondary)
                                 }
-                                .foregroundColor(AppTheme.colors.textSecondary)
-                            }
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(recentTokens) { token in
-                                        RecentTokenPill(token: token)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(recentTokens) { token in
+                                            RecentTokenPill(token: token)
+                                        }
                                     }
                                 }
                             }
+                            .padding(.horizontal)
+                            .padding(.bottom)
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom)
                         
-                        // Tokens List
+                        // Trending Tokens List
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Tokens")
+                            Text("Trending Tokens")
                                 .font(.title2)
                                 .foregroundColor(AppTheme.colors.textPrimary)
                                 .padding(.horizontal)
                             
                             VStack(spacing: 1) {
-                                ForEach(MockData.searchTokens) { token in
+                                ForEach(trendingTokens) { token in
                                     SearchTokenRow(token: token) {
+                                        if !recentTokens.contains(where: { $0.id == token.id }) {
+                                            recentTokens.insert(token, at: 0)
+                                            if recentTokens.count > 5 {
+                                                recentTokens.removeLast()
+                                            }
+                                        }
                                         selectedToken = token
                                         showSwapView = true
                                     }
@@ -105,10 +110,16 @@ struct RecentTokenPill: View {
     
     var body: some View {
         HStack(spacing: 8) {
-            Image(token.symbol.lowercased())
-                .resizable()
+            Circle()
+                .fill(Color.black.opacity(0.3))
                 .frame(width: 24, height: 24)
-                .clipShape(Circle())
+                .overlay(
+                    Image(token.symbol.lowercased())
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 16, height: 16)
+                        .foregroundColor(.white)
+                )
             
             Text(token.symbol)
                 .foregroundColor(AppTheme.colors.textPrimary)
@@ -127,10 +138,16 @@ struct SearchTokenRow: View {
     var body: some View {
         HStack(spacing: 16) {
             // Token Icon
-            Image(token.symbol.lowercased())
-                .resizable()
+            Circle()
+                .fill(Color.black.opacity(0.3))
                 .frame(width: 40, height: 40)
-                .clipShape(Circle())
+                .overlay(
+                    Image(token.symbol.lowercased())
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .foregroundColor(.white)
+                )
             
             // Token Info
             VStack(alignment: .leading, spacing: 4) {
@@ -143,8 +160,13 @@ struct SearchTokenRow: View {
                         .foregroundColor(AppTheme.colors.textSecondary)
                     Text("•")
                         .foregroundColor(AppTheme.colors.textSecondary)
-                    Text("$\(token.price, specifier: "%.2f")")
-                        .foregroundColor(AppTheme.colors.textSecondary)
+                    if token.price < 0.01 {
+                        Text("$\(token.price, specifier: "%.8f")")
+                            .foregroundColor(AppTheme.colors.textSecondary)
+                    } else {
+                        Text("$\(token.price, specifier: "%.2f")")
+                            .foregroundColor(AppTheme.colors.textSecondary)
+                    }
                     Text("\(token.priceChange24h >= 0 ? "+" : "")\(token.priceChange24h, specifier: "%.2f")%")
                         .foregroundColor(token.priceChange24h >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
                 }
@@ -166,7 +188,33 @@ struct SearchTokenRow: View {
     }
 }
 
-#Preview {
-    SearchView()
-        .preferredColorScheme(.dark)
+// MARK: - Preview
+struct SearchView_Previews: PreviewProvider {
+    static var previewTrendingTokens = [
+        Token(symbol: "TRUMP", name: "OFFICIAL TRUMP", price: 49.00, priceChange24h: 41.95, volume24h: 0),
+        Token(symbol: "MELANIA", name: "Melania Meme", price: 8.01, priceChange24h: 7.8, volume24h: 0),
+        Token(symbol: "USA", name: "American Coin", price: 0.00001309, priceChange24h: 212.75, volume24h: 0),
+        Token(symbol: "MR BEAST", name: "OFFICIAL MR BEAST", price: 0.00165924, priceChange24h: 21974.04, volume24h: 0),
+        Token(symbol: "ELON", name: "Official Elon Coin", price: 0.0345, priceChange24h: -58.88, volume24h: 0),
+        Token(symbol: "SATOSHI", name: "Official Satoshi Coin", price: 0.00257009, priceChange24h: 2190.45, volume24h: 0),
+        Token(symbol: "$1", name: "just buy $1 worth of this coin", price: 0.0476, priceChange24h: 1781.16, volume24h: 0)
+    ]
+    
+    static var previewRecentTokens = [
+        Token(symbol: "SOL", name: "Solana", price: 228.62, priceChange24h: -3.5, volume24h: 1_000_000),
+        Token(symbol: "USDT", name: "Tether USD", price: 1.00, priceChange24h: 0.01, volume24h: 500_000),
+        Token(symbol: "JitoSOL", name: "Jito Staked SOL", price: 263.83, priceChange24h: -3.54, volume24h: 750_000)
+    ]
+    
+    static var previews: some View {
+        SearchView()
+            .preferredColorScheme(.dark)
+            .onAppear {
+                if let view = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController?.view as? UIView,
+                   let searchView = view.subviews.first?.subviews.first as? SearchView {
+                    searchView.trendingTokens = previewTrendingTokens
+                    searchView.recentTokens = previewRecentTokens
+                }
+            }
+    }
 } 

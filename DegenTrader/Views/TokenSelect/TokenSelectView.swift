@@ -7,15 +7,7 @@ struct TokenSelectView: View {
     @State private var searchText = ""
     
     private let tokens: [Token] = [
-        Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
-        Token(symbol: "BONK", name: "Bonk", price: 0.000001, priceChange24h: 15.28, volume24h: 500_000),
-        Token(symbol: "JIFFY", name: "Jiffy", price: 0.36, priceChange24h: -5.23, volume24h: 300_000),
-        Token(symbol: "PST", name: "pSt5mxG", price: 0.00, priceChange24h: 0.00, volume24h: 100_000),
-        Token(symbol: "JIZZ", name: "Jizzwel", price: 0.00, priceChange24h: 0.00, volume24h: 50_000),
-        Token(symbol: "BTC", name: "Bitcoin", price: 43250.82, priceChange24h: 2.15, volume24h: 2_000_000),
-        Token(symbol: "ETH", name: "Ethereum", price: 2285.64, priceChange24h: 1.87, volume24h: 1_500_000),
-        Token(symbol: "ADA", name: "Cardano", price: 0.58, priceChange24h: -3.42, volume24h: 800_000),
-        Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000)
+        Token(symbol: "SOL", name: "Solana", price: 0.0, priceChange24h: 0.0, volume24h: 0.0)
     ]
     
     private var filteredTokens: [Token] {

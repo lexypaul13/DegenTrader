@@ -13,58 +13,16 @@ class WalletManager: ObservableObject {
     private init() {
         loadData()
         if balances.isEmpty {
-            // Initialize with default balances if none exist
+            // Initialize with only SOL balance
             balances = [
-                "SOL": 1.5,
-                "USDC": 100.0,
-                "BONK": 1_000_000.0
+                "SOL": 0.0
             ]
             saveData()
         }
         
-        // Add sample transactions
-        let sampleTransactions = [
-            Transaction(
-                date: Date(),
-                fromToken: Token(symbol: "SOL", name: "Solana", price: 95.42, priceChange24h: 2.5, volume24h: 1_500_000),
-                toToken: Token(symbol: "BONK", name: "Bonk", price: 0.000012, priceChange24h: 15.2, volume24h: 500_000),
-                fromAmount: 1.5,
-                toAmount: 12500000,
-                status: .succeeded,
-                source: "Jupiter"
-            ),
-            Transaction(
-                date: Calendar.current.date(byAdding: .hour, value: -2, to: Date())!,
-                fromToken: Token(symbol: "USDC", name: "USD Coin", price: 1.0, priceChange24h: 0.01, volume24h: 2_000_000),
-                toToken: Token(symbol: "SOL", name: "Solana", price: 95.42, priceChange24h: 2.5, volume24h: 1_500_000),
-                fromAmount: 500,
-                toAmount: 5.24,
-                status: .succeeded,
-                source: "Jupiter"
-            ),
-            Transaction(
-                date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
-                fromToken: Token(symbol: "SOL", name: "Solana", price: 95.42, priceChange24h: 2.5, volume24h: 1_500_000),
-                toToken: Token(symbol: "JUP", name: "Jupiter", price: 0.85, priceChange24h: -1.2, volume24h: 800_000),
-                fromAmount: 2.0,
-                toAmount: 220.5,
-                status: .failed,
-                source: "Jupiter"
-            ),
-            Transaction(
-                date: Calendar.current.date(byAdding: .day, value: -2, to: Date())!,
-                fromToken: Token(symbol: "BONK", name: "Bonk", price: 0.000012, priceChange24h: 15.2, volume24h: 500_000),
-                toToken: Token(symbol: "USDC", name: "USD Coin", price: 1.0, priceChange24h: 0.01, volume24h: 2_000_000),
-                fromAmount: 8500000,
-                toAmount: 102,
-                status: .succeeded,
-                source: "Jupiter"
-            )
-        ]
-        
-        // Only set sample transactions if there are no existing ones
+        // Remove sample transactions initialization
         if transactions.isEmpty {
-            transactions = sampleTransactions
+            transactions = []
             saveData()
         }
     }
