@@ -7,14 +7,7 @@ struct SearchView: View {
     @State private var selectedToken: Token?
     
     // TODO: Replace with live data
-    @State public var trendingTokens: [Token] = [
-        Token(symbol: "TRUMP", name: "OFFICIAL TRUMP", price: 49.00, priceChange24h: 41.95, volume24h: 0),
-        Token(symbol: "MELANIA", name: "Melania Meme", price: 8.01, priceChange24h: 7.8, volume24h: 0),
-        Token(symbol: "USA", name: "American Coin", price: 0.00001309, priceChange24h: 212.75, volume24h: 0),
-        Token(symbol: "MR BEAST", name: "OFFICIAL MR BEAST", price: 0.00165924, priceChange24h: 21974.04, volume24h: 0),
-        Token(symbol: "ELON", name: "Official Elon Coin", price: 0.0345, priceChange24h: -58.88, volume24h: 0),
-        Token(symbol: "SATOSHI", name: "Official Satoshi Coin", price: 0.00257009, priceChange24h: 2190.45, volume24h: 0),
-        Token(symbol: "$1", name: "just buy $1 worth of this coin", price: 0.0476, priceChange24h: 1781.16, volume24h: 0)]
+    @State public var trendingTokens: [Token] = []
     @State public var recentTokens: [Token] = []
     
     var body: some View {

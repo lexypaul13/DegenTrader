@@ -15,7 +15,6 @@ DegenTrader is a Solana meme coin trading simulator focusing on providing real-t
 ### Search View
 - ✅ Connected to Jupiter API for trending tokens
 - ✅ Successfully fetching and decoding token data
-- ✅ Implemented volume-based sorting
 - ✅ Added detailed token information display
 
 ### API Integration Progress
@@ -26,7 +25,6 @@ DegenTrader is a Solana meme coin trading simulator focusing on providing real-t
      - `JupiterPriceResponse`
      - `JupiterTokenV6`
      - `JupiterListToken`
-   - ✅ Implemented trending tokens fetch with volume sorting
    - ✅ Added proper error handling and debugging output
    - ✅ Refactored to protocol-based architecture
    - ✅ Removed singleton pattern for better testability
