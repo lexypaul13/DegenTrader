@@ -7,105 +7,105 @@ struct MockData {
             name: "Solana",
             price: 1.18,
             priceChange24h: -2.41,
-            volume24h: 1_000_000
+            volume24h: 1_000_000, logoURI: nil
         ),
         Token(
             symbol: "JIFFY",
             name: "Jiffy",
             price: 0.36,
             priceChange24h: -5.28,
-            volume24h: 500_000
+            volume24h: 500_000, logoURI: nil
         ),
         Token(
             symbol: "PST",
             name: "pSt5mxG",
             price: 0.00,
             priceChange24h: 0.00,
-            volume24h: 0
+            volume24h: 0, logoURI: nil
         ),
         Token(
             symbol: "JIZZ",
             name: "Jizzwel",
             price: 0.00,
             priceChange24h: 0.00,
-            volume24h: 0
+            volume24h: 0, logoURI: nil
         ),
         Token(
             symbol: "BTC",
             name: "Bitcoin",
             price: 43250.82,
             priceChange24h: 2.15,
-            volume24h: 25_000_000
+            volume24h: 25_000_000, logoURI: nil
         ),
         Token(
             symbol: "ETH",
             name: "Ethereum",
             price: 2285.64,
             priceChange24h: 1.87,
-            volume24h: 15_000_000
+            volume24h: 15_000_000, logoURI: nil
         ),
         Token(
             symbol: "ADA",
             name: "Cardano",
             price: 0.58,
             priceChange24h: -3.42,
-            volume24h: 2_000_000
+            volume24h: 2_000_000, logoURI: nil
         ),
         Token(
             symbol: "DOT",
             name: "Polkadot",
             price: 7.84,
             priceChange24h: -1.23,
-            volume24h: 1_500_000
+            volume24h: 1_500_000, logoURI: nil
         ),
         Token(
             symbol: "AVAX",
             name: "Avalanche",
             price: 35.62,
             priceChange24h: 4.56,
-            volume24h: 3_000_000
+            volume24h: 3_000_000, logoURI: nil
         ),
         Token(
             symbol: "LINK",
             name: "Chainlink",
             price: 14.92,
             priceChange24h: 2.78,
-            volume24h: 1_200_000
+            volume24h: 1_200_000, logoURI: nil
         ),
         Token(
             symbol: "MATIC",
             name: "Polygon",
             price: 0.89,
             priceChange24h: -0.95,
-            volume24h: 900_000
+            volume24h: 900_000, logoURI: nil
         ),
         Token(
             symbol: "ATOM",
             name: "Cosmos",
             price: 9.76,
             priceChange24h: 1.45,
-            volume24h: 800_000
+            volume24h: 800_000, logoURI: nil
         ),
         Token(
             symbol: "UNI",
             name: "Uniswap",
             price: 6.23,
             priceChange24h: -2.31,
-            volume24h: 700_000
+            volume24h: 700_000, logoURI: nil
         ),
         Token(
             symbol: "AAVE",
             name: "Aave",
             price: 89.45,
             priceChange24h: 3.67,
-            volume24h: 600_000
+            volume24h: 600_000, logoURI: nil
         ),
         Token(
             symbol: "ALGO",
             name: "Algorand",
             price: 0.17,
             priceChange24h: -1.82,
-            volume24h: 400_000
+            volume24h: 400_000, logoURI: nil
         )
     ]
     
@@ -115,42 +115,42 @@ struct MockData {
             name: "Solana",
             price: 228.62,
             priceChange24h: -3.5,
-            volume24h: 1_000_000
+            volume24h: 1_000_000, logoURI: nil
         ),
         Token(
             symbol: "USDC",
             name: "USD Coin",
             price: 1.00,
             priceChange24h: -0.02,
-            volume24h: 500_000
+            volume24h: 500_000, logoURI: nil
         ),
         Token(
             symbol: "USDT",
             name: "Tether USD",
             price: 1.00,
             priceChange24h: 0.01,
-            volume24h: 750_000
+            volume24h: 750_000, logoURI: nil
         ),
         Token(
             symbol: "JitoSOL",
             name: "Jito Staked SOL",
             price: 263.83,
             priceChange24h: -3.54,
-            volume24h: 300_000
+            volume24h: 300_000, logoURI: nil
         ),
         Token(
             symbol: "BONK",
             name: "Bonk",
             price: 0.00001234,
             priceChange24h: 9.15,
-            volume24h: 100_000
+            volume24h: 100_000, logoURI: nil
         ),
         Token(
             symbol: "RAY",
             name: "Raydium",
             price: 4.12,
             priceChange24h: -0.09,
-            volume24h: 200_000
+            volume24h: 200_000, logoURI: nil
         )
     ]
     

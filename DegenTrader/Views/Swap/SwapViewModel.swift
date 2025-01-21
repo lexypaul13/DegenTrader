@@ -3,8 +3,8 @@ import SwiftUI
 class SwapViewModel: ObservableObject {
     @Published var fromAmount: String = ""
     @Published var toAmount: String = ""
-    @Published var selectedFromToken = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000)
-    @Published var selectedToToken = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000)
+    @Published var selectedFromToken = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil)
+    @Published var selectedToToken = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil)
     @Published var errorMessage: String? = nil
     @Published var showError = false
     @Published var isLoading = false

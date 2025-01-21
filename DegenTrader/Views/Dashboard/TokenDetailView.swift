@@ -269,7 +269,7 @@ struct TokenPerformanceRow: View {
                 name: "Solana",
                 price: 95.42,
                 priceChange24h: 2.50,
-                volume24h: 1_000_000
+                volume24h: 1_000_000, logoURI: nil
             )
         )
         .preferredColorScheme(.dark)

@@ -245,7 +245,7 @@ struct PriceAlertView: View {
         name: "Solana",
         price: 104.23,
         priceChange24h: 2.5,
-        volume24h: 1_500_000
+        volume24h: 1_500_000, logoURI: nil
     ))
     .preferredColorScheme(.dark)
 } 

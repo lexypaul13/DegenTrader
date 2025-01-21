@@ -122,7 +122,7 @@ struct BuyView: View {
             // If buy succeeds, add the transaction
             walletManager.addTransaction(Transaction(
                 date: Date(),
-                fromToken: Token(symbol: "USD", name: "US Dollar", price: 1.0, priceChange24h: 0, volume24h: 0),
+                fromToken: Token(symbol: "USD", name: "US Dollar", price: 1.0, priceChange24h: 0, volume24h: 0, logoURI: nil),
                 toToken: token,
                 fromAmount: dollarAmount,
                 toAmount: tokenAmount,
@@ -148,7 +148,7 @@ struct BuyView: View {
             name: "Solana",
             price: 95.42,
             priceChange24h: 2.5,
-            volume24h: 1_500_000
+            volume24h: 1_500_000, logoURI: nil
         ))
     }
     .preferredColorScheme(.dark)

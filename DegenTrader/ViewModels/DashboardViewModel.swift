@@ -11,7 +11,7 @@ class DashboardViewModel: ObservableObject {
         name: "Solana",
         price: 0.0,
         priceChange24h: 0.0,
-        volume24h: 0.0
+        volume24h: 0.0, logoURI: nil
     )
     
     init() {

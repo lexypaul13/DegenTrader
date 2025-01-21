@@ -60,10 +60,10 @@ struct AlertCard: View {
         name: "Bitcoin",
         price: 50000.00,
         priceChange24h: 2.5,
-        volume24h: 1_500_000
+        volume24h: 1_500_000, logoURI: nil
     )
     
-    return VStack(spacing: 16) {
+    VStack(spacing: 16) {
         // Price alert preview
         AlertCard(alert: Alert(
             token: sampleToken,

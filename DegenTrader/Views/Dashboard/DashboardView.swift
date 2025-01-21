@@ -107,7 +107,7 @@ struct DashboardView: View {
             }
             .fullScreenCover(isPresented: $showBuyView) {
                 NavigationView {
-                    BuyView(token: Token(symbol: "SOL", name: "Solana", price: 100.0, priceChange24h: 0, volume24h: 0))
+                    BuyView(token: Token(symbol: "SOL", name: "Solana", price: 100.0, priceChange24h: 0, volume24h: 0, logoURI: nil))
                 }
             }
             

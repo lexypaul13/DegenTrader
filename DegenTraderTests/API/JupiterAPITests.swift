@@ -62,7 +62,7 @@ final class JupiterAPITests: XCTestCase {
         print("Meme coins detected: \(viewModel.memeCoins.count)")
         
         print("\nMeme Coins:")
-        viewModel.memeCoins.prefix(5).forEach { token in
+        viewModel.memeCoins.prefix(15).forEach { token in
             print("""
             
             Symbol: \(token.symbol)
@@ -74,18 +74,6 @@ final class JupiterAPITests: XCTestCase {
             """)
         }
         
-        print("\nNon-Meme Coins:")
-        let nonMemeCoins = Set(viewModel.tokens).subtracting(Set(viewModel.memeCoins))
-        nonMemeCoins.prefix(5).forEach { token in
-            print("""
-            
-            Symbol: \(token.symbol)
-            Name: \(token.name)
-            Volume: \(token.daily_volume.map { String(format: "$%.2f", $0) } ?? "N/A")
-            Address: \(token.address)
-            Created: \(token.created_at)
-            Tags: \(token.tags.joined(separator: ", "))
-            """)
-        }
+
     }
 } 

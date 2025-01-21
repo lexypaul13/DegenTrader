@@ -149,8 +149,8 @@ struct TransactionDetailRow: View {
         TransactionDetailView(
             transaction: Transaction(
                 date: Date(),
-                fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
-                toToken: Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000),
+                fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000, logoURI: nil),
+                toToken: Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil),
                 fromAmount: 0.06725,
                 toAmount: 23629.89647,
                 status: .succeeded,
