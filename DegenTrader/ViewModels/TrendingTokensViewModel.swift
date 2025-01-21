@@ -7,8 +7,12 @@ protocol TrendingTokensViewModelProtocol: ObservableObject {
     var memeCoins: [JupiterToken] { get }
     var state: LoadingState { get }
     var errorMessage: String? { get }
+    var lastUpdateText: String { get }
+    var hasMorePages: Bool { get }
+    var currentPage: Int { get }
     
     func fetchTrendingTokens() async
+    func loadNextPage() async
 }
 
 // MARK: - Loading State
@@ -26,28 +30,99 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
     @Published private(set) var memeCoins: [JupiterToken] = []
     @Published private(set) var state: LoadingState = .idle
     @Published private(set) var errorMessage: String?
+    @Published private(set) var lastUpdateText: String = "Not updated"
+    @Published private(set) var hasMorePages = true
+    @Published private(set) var currentPage = 1
     
     private let apiService: JupiterAPIServiceProtocol
     private let memeCoinService: MemeCoinServiceProtocol
+    private var lastFetchTime: Date?
+    private let cacheTimeout: TimeInterval = 300 // 5 minutes
+    private var autoUpdateTask: Task<Void, Never>?
+    
+    private let tokensPerPage = 10
+    private let maxPages = 3
+    private var allTokens: [JupiterToken] = []
     
     init(apiService: JupiterAPIServiceProtocol = JupiterAPIService(),
          memeCoinService: MemeCoinServiceProtocol = MemeCoinService()) {
         self.apiService = apiService
         self.memeCoinService = memeCoinService
+        setupAutoUpdate()
+    }
+    
+    deinit {
+        autoUpdateTask?.cancel()
+    }
+    
+    private func setupAutoUpdate() {
+        autoUpdateTask = Task {
+            while !Task.isCancelled {
+                await fetchTrendingTokens()
+                try? await Task.sleep(nanoseconds: UInt64(cacheTimeout * 1_000_000_000))
+            }
+        }
     }
     
     func fetchTrendingTokens() async {
+        // Check if we have cached data that's still fresh
+        if let lastFetch = lastFetchTime,
+           Date().timeIntervalSince(lastFetch) < cacheTimeout,
+           !tokens.isEmpty {
+            return
+        }
+        
         state = .loading
         errorMessage = nil
+        currentPage = 1
         
         do {
-            tokens = try await apiService.fetchTrendingTokens()
-            memeCoins = memeCoinService.filterMemeCoins(tokens)
+            allTokens = try await apiService.fetchTrendingTokens()
+            let allMemeCoins = memeCoinService.filterMemeCoins(allTokens)
+            
+            // Get first page
+            memeCoins = Array(allMemeCoins.prefix(tokensPerPage))
+            hasMorePages = allMemeCoins.count > tokensPerPage
+            
+            lastFetchTime = Date()
+            updateLastUpdateText()
             state = .loaded
         } catch {
             errorMessage = error.localizedDescription
             state = .error
         }
+    }
+    
+    func loadNextPage() async {
+        guard hasMorePages, state == .loaded, currentPage < maxPages else {
+            return
+        }
+        
+        let nextPage = currentPage + 1
+        let startIndex = (nextPage - 1) * tokensPerPage
+        let allMemeCoins = memeCoinService.filterMemeCoins(allTokens)
+        
+        let newTokens = Array(allMemeCoins.dropFirst(startIndex).prefix(tokensPerPage))
+        
+        guard !newTokens.isEmpty else {
+            hasMorePages = false
+            return
+        }
+        
+        currentPage = nextPage
+        memeCoins.append(contentsOf: newTokens)
+        hasMorePages = currentPage < maxPages
+    }
+    
+    private func updateLastUpdateText() {
+        guard let lastFetch = lastFetchTime else {
+            lastUpdateText = "Not updated"
+            return
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        lastUpdateText = "Updated at \(formatter.string(from: lastFetch))"
     }
 }
 

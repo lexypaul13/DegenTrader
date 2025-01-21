@@ -79,7 +79,7 @@ struct SearchView: View {
                                 Spacer()
                                 
                                 if case .loaded = trendingViewModel.state {
-                                    Text("Updated \(Date(), style: .relative)")
+                                    Text(trendingViewModel.lastUpdateText)
                                         .font(.caption)
                                         .foregroundColor(AppTheme.colors.textSecondary)
                                 }
@@ -92,7 +92,7 @@ struct SearchView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                             case .loaded:
-                                VStack(spacing: 1) {
+                                LazyVStack(spacing: 1) {
                                     ForEach(trendingViewModel.memeCoins) { token in
                                         SearchTokenRow(
                                             token: Token(
@@ -122,6 +122,18 @@ struct SearchView: View {
                                             showSwapView = true
                                         }
                                     }
+                                    
+                                    if trendingViewModel.hasMorePages {
+                                        ProgressView()
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .onAppear {
+                                                print("DEBUG: Reached end of list, triggering next page load")
+                                                Task {
+                                                    await trendingViewModel.loadNextPage()
+                                                }
+                                            }
+                                    }
                                 }
                             case .error:
                                 Text(trendingViewModel.errorMessage ?? "Failed to load trending tokens")
@@ -141,9 +153,6 @@ struct SearchView: View {
                 }
             }
             .task {
-                await trendingViewModel.fetchTrendingTokens()
-            }
-            .refreshable {
                 await trendingViewModel.fetchTrendingTokens()
             }
         }
