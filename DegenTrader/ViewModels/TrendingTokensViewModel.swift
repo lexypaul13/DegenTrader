@@ -94,7 +94,11 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
     }
     
     func loadNextPage() async {
+        print("\nDEBUG: loadNextPage called")
+        print("DEBUG: Current page: \(currentPage), Has more pages: \(hasMorePages)")
+        
         guard hasMorePages, state == .loaded, currentPage < maxPages else {
+            print("DEBUG: Cannot load next page - hasMorePages: \(hasMorePages), state: \(state), currentPage: \(currentPage), maxPages: \(maxPages)")
             return
         }
         
@@ -102,9 +106,14 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
         let startIndex = (nextPage - 1) * tokensPerPage
         let allMemeCoins = memeCoinService.filterMemeCoins(allTokens)
         
+        print("DEBUG: Loading page \(nextPage) - Starting from index \(startIndex)")
+        print("DEBUG: Total meme coins available: \(allMemeCoins.count)")
+        
         let newTokens = Array(allMemeCoins.dropFirst(startIndex).prefix(tokensPerPage))
+        print("DEBUG: New tokens found: \(newTokens.count)")
         
         guard !newTokens.isEmpty else {
+            print("DEBUG: No new tokens found, disabling pagination")
             hasMorePages = false
             return
         }
@@ -112,6 +121,8 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
         currentPage = nextPage
         memeCoins.append(contentsOf: newTokens)
         hasMorePages = currentPage < maxPages
+        print("DEBUG: Page \(currentPage) loaded - Total tokens: \(memeCoins.count)")
+        print("DEBUG: Has more pages: \(hasMorePages)\n")
     }
     
     private func updateLastUpdateText() {

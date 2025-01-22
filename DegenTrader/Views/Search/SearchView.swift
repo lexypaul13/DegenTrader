@@ -127,11 +127,11 @@ struct SearchView: View {
                                         ProgressView()
                                             .frame(maxWidth: .infinity)
                                             .padding()
-                                            .onAppear {
-                                                print("DEBUG: Reached end of list, triggering next page load")
-                                                Task {
-                                                    await trendingViewModel.loadNextPage()
-                                                }
+                                            .task {
+                                                print("\nDEBUG: -------- Pagination Trigger --------")
+                                                print("DEBUG: Current tokens displayed: \(trendingViewModel.memeCoins.count)")
+                                                await trendingViewModel.loadNextPage()
+                                                print("DEBUG: ------- End Pagination -------\n")
                                             }
                                     }
                                 }
@@ -210,20 +210,15 @@ struct SearchTokenRow: View {
                 .overlay(
                     Group {
                         if let logoURI = token.logoURI {
-                            AsyncImage(url: URL(string: logoURI)) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                            } placeholder: {
-                                ProgressView()
-                            }
+                            CachedAsyncImage(url: URL(string: logoURI))
+                                .frame(width: 24, height: 24)
                         } else {
                             Image(token.symbol.lowercased())
                                 .resizable()
                                 .scaledToFit()
+                                .frame(width: 24, height: 24)
                         }
                     }
-                    .frame(width: 24, height: 24)
                     .foregroundColor(.white)
                 )
             
