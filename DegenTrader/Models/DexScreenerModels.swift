@@ -7,11 +7,20 @@ struct DexScreenerResponse: Codable {
     let baseToken: BaseToken
     let priceNative: String
     let priceUsd: String
+    let priceChange: PriceChange
     
     struct BaseToken: Codable {
         let address: String
         let name: String
         let symbol: String
+    }
+    
+    struct PriceChange: Codable {
+        let h24: Double
+        
+        enum CodingKeys: String, CodingKey {
+            case h24 = "h24"
+        }
     }
     
     // Converting string prices to Double
@@ -22,4 +31,4 @@ struct DexScreenerResponse: Codable {
     var usdPrice: Double {
         Double(priceUsd) ?? 0.0
     }
-} 
+}

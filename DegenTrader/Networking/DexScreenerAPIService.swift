@@ -7,7 +7,7 @@ protocol DexScreenerAPIServiceProtocol {
 }
 
 // MARK: - Implementation
-final class DexScreenerAPIService: NetworkRequestable {
+final class DexScreenerAPIService: NetworkRequestable, DexScreenerAPIServiceProtocol {
     private let baseURL = "https://api.dexscreener.com"
     private let chainId = "solana"
     
@@ -43,7 +43,7 @@ final class DexScreenerAPIService: NetworkRequestable {
         for response in responses {
             prices[response.baseToken.address] = TokenPrice(
                 price: response.usdPrice,
-                priceChange24h: 0.0
+                priceChange24h: response.priceChange.h24
             )
         }
         

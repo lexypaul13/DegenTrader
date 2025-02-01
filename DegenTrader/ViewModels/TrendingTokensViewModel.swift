@@ -5,6 +5,7 @@ import Combine
 protocol TrendingTokensViewModelProtocol: ObservableObject {
     var tokens: [JupiterToken] { get }
     var memeCoins: [JupiterToken] { get }
+    var tokenPrices: [String: TokenPrice] { get }
     var state: LoadingState { get }
     var errorMessage: String? { get }
     var lastUpdateText: String { get }
@@ -13,6 +14,8 @@ protocol TrendingTokensViewModelProtocol: ObservableObject {
     
     func fetchTrendingTokens() async
     func loadNextPage() async
+    func getPrice(for token: JupiterToken) -> Double
+    func getPriceChange(for token: JupiterToken) -> Double
 }
 
 // MARK: - Loading State
@@ -20,39 +23,46 @@ enum LoadingState {
     case idle
     case loading
     case loaded
+    case loadingMore
     case error
 }
 
 // MARK: - View Model Implementation
 @MainActor
-final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingTokensViewModelProtocol {
+final class TrendingTokensViewModel: ObservableObject, TrendingTokensViewModelProtocol {
     @Published private(set) var tokens: [JupiterToken] = []
     @Published private(set) var memeCoins: [JupiterToken] = []
+    @Published private(set) var tokenPrices: [String: TokenPrice] = [:]
     @Published private(set) var state: LoadingState = .idle
     @Published private(set) var errorMessage: String?
     @Published private(set) var lastUpdateText: String = "Not updated"
     @Published private(set) var hasMorePages = true
     @Published private(set) var currentPage = 1
     
-    private let apiService: JupiterAPIServiceProtocol
+    private let jupiterService: JupiterAPIServiceProtocol
+    private let priceService: DexScreenerAPIServiceProtocol
     private let memeCoinService: MemeCoinServiceProtocol
     private var lastFetchTime: Date?
     private let cacheTimeout: TimeInterval = 300 // 5 minutes
     private var autoUpdateTask: Task<Void, Never>?
+    private var priceUpdateTask: Task<Void, Never>?
     
     private let tokensPerPage = 10
     private let maxPages = 3
     private var allTokens: [JupiterToken] = []
     
-    init(apiService: JupiterAPIServiceProtocol = JupiterAPIService(),
+    init(jupiterService: JupiterAPIServiceProtocol = JupiterAPIService(),
+         priceService: DexScreenerAPIServiceProtocol = DexScreenerAPIService(),
          memeCoinService: MemeCoinServiceProtocol = MemeCoinService()) {
-        self.apiService = apiService
+        self.jupiterService = jupiterService
+        self.priceService = priceService
         self.memeCoinService = memeCoinService
         setupAutoUpdate()
     }
     
     deinit {
         autoUpdateTask?.cancel()
+        priceUpdateTask?.cancel()
     }
     
     private func setupAutoUpdate() {
@@ -60,6 +70,14 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
             while !Task.isCancelled {
                 await fetchTrendingTokens()
                 try? await Task.sleep(nanoseconds: UInt64(cacheTimeout * 1_000_000_000))
+            }
+        }
+        
+        // Update prices more frequently
+        priceUpdateTask = Task {
+            while !Task.isCancelled {
+                await updatePrices()
+                try? await Task.sleep(nanoseconds: UInt64(30 * 1_000_000_000)) // 30 seconds
             }
         }
     }
@@ -77,12 +95,15 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
         currentPage = 1
         
         do {
-            allTokens = try await apiService.fetchTrendingTokens()
+            allTokens = try await jupiterService.fetchTrendingTokens()
             let allMemeCoins = memeCoinService.filterMemeCoins(allTokens)
             
             // Get first page
             memeCoins = Array(allMemeCoins.prefix(tokensPerPage))
             hasMorePages = allMemeCoins.count > tokensPerPage
+            
+            // Update prices for the first page
+            await updatePrices()
             
             lastFetchTime = Date()
             updateLastUpdateText()
@@ -93,47 +114,61 @@ final class TrendingTokensViewModel: ObservableObject, @preconcurrency TrendingT
         }
     }
     
-    func loadNextPage() async {
-        print("\nDEBUG: loadNextPage called")
-        print("DEBUG: Current page: \(currentPage), Has more pages: \(hasMorePages)")
+    private func updatePrices() async {
+        guard !memeCoins.isEmpty else { return }
         
-        guard hasMorePages, state == .loaded, currentPage < maxPages else {
-            print("DEBUG: Cannot load next page - hasMorePages: \(hasMorePages), state: \(state), currentPage: \(currentPage), maxPages: \(maxPages)")
-            return
+        do {
+            let addresses = memeCoins.map { $0.address }
+            tokenPrices = try await priceService.fetchTokenPrices(addresses: addresses)
+            objectWillChange.send()
+        } catch {
+            print("DEBUG: Failed to update prices: \(error.localizedDescription)")
         }
+    }
+    
+    func getPrice(for token: JupiterToken) -> Double {
+        tokenPrices[token.address]?.price ?? 0.0
+    }
+    
+    func getPriceChange(for token: JupiterToken) -> Double {
+        tokenPrices[token.address]?.priceChange24h ?? 0.0
+    }
+    
+    func loadNextPage() async {
+        guard hasMorePages, 
+              (state == .loaded || state == .loadingMore), 
+              currentPage < maxPages else { 
+            return 
+        }
+        
+        state = .loadingMore
         
         let nextPage = currentPage + 1
         let startIndex = (nextPage - 1) * tokensPerPage
         let allMemeCoins = memeCoinService.filterMemeCoins(allTokens)
         
-        print("DEBUG: Loading page \(nextPage) - Starting from index \(startIndex)")
-        print("DEBUG: Total meme coins available: \(allMemeCoins.count)")
-        
         let newTokens = Array(allMemeCoins.dropFirst(startIndex).prefix(tokensPerPage))
-        print("DEBUG: New tokens found: \(newTokens.count)")
-        
         guard !newTokens.isEmpty else {
-            print("DEBUG: No new tokens found, disabling pagination")
             hasMorePages = false
+            state = .loaded
             return
         }
         
-        currentPage = nextPage
         memeCoins.append(contentsOf: newTokens)
-        hasMorePages = currentPage < maxPages
-        print("DEBUG: Page \(currentPage) loaded - Total tokens: \(memeCoins.count)")
-        print("DEBUG: Has more pages: \(hasMorePages)\n")
+        currentPage = nextPage
+        hasMorePages = allMemeCoins.count > memeCoins.count && currentPage < maxPages
+        
+        // Update prices for new tokens
+        await updatePrices()
+        state = .loaded
     }
     
     private func updateLastUpdateText() {
-        guard let lastFetch = lastFetchTime else {
-            lastUpdateText = "Not updated"
-            return
+        if let lastFetch = lastFetchTime {
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .full
+            lastUpdateText = "Updated " + formatter.localizedString(for: lastFetch, relativeTo: Date())
         }
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        lastUpdateText = "Updated at \(formatter.string(from: lastFetch))"
     }
 }
 

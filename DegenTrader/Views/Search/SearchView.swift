@@ -86,61 +86,7 @@ struct SearchView: View {
                             }
                             .padding(.horizontal)
                             
-                            switch trendingViewModel.state {
-                            case .idle, .loading:
-                                ProgressView()
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                            case .loaded:
-                                LazyVStack(spacing: 1) {
-                                    ForEach(trendingViewModel.memeCoins) { token in
-                                        SearchTokenRow(
-                                            token: Token(
-                                                symbol: token.symbol,
-                                                name: token.name,
-                                                price: 0.0,
-                                                priceChange24h: 0.0,
-                                                volume24h: token.daily_volume ?? 0,
-                                                logoURI: token.logoURI
-                                            )
-                                        ) {
-                                            let newToken = Token(
-                                                symbol: token.symbol,
-                                                name: token.name,
-                                                price: 0.0,
-                                                priceChange24h: 0.0,
-                                                volume24h: token.daily_volume ?? 0,
-                                                logoURI: token.logoURI
-                                            )
-                                            if !recentTokens.contains(where: { $0.id == newToken.id }) {
-                                                recentTokens.insert(newToken, at: 0)
-                                                if recentTokens.count > 5 {
-                                                    recentTokens.removeLast()
-                                                }
-                                            }
-                                            selectedToken = newToken
-                                            showSwapView = true
-                                        }
-                                    }
-                                    
-                                    if trendingViewModel.hasMorePages {
-                                        ProgressView()
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .task {
-                                                print("\nDEBUG: -------- Pagination Trigger --------")
-                                                print("DEBUG: Current tokens displayed: \(trendingViewModel.memeCoins.count)")
-                                                await trendingViewModel.loadNextPage()
-                                                print("DEBUG: ------- End Pagination -------\n")
-                                            }
-                                    }
-                                }
-                            case .error:
-                                Text(trendingViewModel.errorMessage ?? "Failed to load trending tokens")
-                                    .foregroundColor(AppTheme.colors.negative)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                            }
+                            TrendingTokensContent(viewModel: trendingViewModel, recentTokens: $recentTokens, selectedToken: $selectedToken, showSwapView: $showSwapView)
                         }
                     }
                     .padding(.top)
@@ -159,8 +105,86 @@ struct SearchView: View {
     }
 }
 
-
-
+// MARK: - Trending Tokens Content
+private struct TrendingTokensContent: View {
+    @ObservedObject var viewModel: TrendingTokensViewModel
+    @Binding var recentTokens: [Token]
+    @Binding var selectedToken: Token?
+    @Binding var showSwapView: Bool
+    
+    var body: some View {
+        switch viewModel.state {
+        case .idle, .loading:
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .padding()
+            
+        case .loaded, .loadingMore:
+            LazyVStack(spacing: 1) {
+                ForEach(viewModel.memeCoins) { token in
+                    let price = viewModel.getPrice(for: token)
+                    let priceChange = viewModel.getPriceChange(for: token)
+                    
+                    SearchTokenRow(
+                        token: Token(
+                            symbol: token.symbol,
+                            name: token.name,
+                            price: price,
+                            priceChange24h: priceChange,
+                            volume24h: token.daily_volume ?? 0,
+                            logoURI: token.logoURI
+                        )
+                    ) {
+                        handleTokenSelection(token, price: price, priceChange: priceChange)
+                    }
+                }
+                
+                if viewModel.hasMorePages {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .opacity(viewModel.state == .loadingMore ? 1 : 0)
+                        Spacer()
+                    }
+                    .frame(height: 50)
+                    .onAppear {
+                        if viewModel.state == .loaded {
+                            Task {
+                                await viewModel.loadNextPage()
+                            }
+                        }
+                    }
+                }
+            }
+            
+        case .error:
+            Text(viewModel.errorMessage ?? "Failed to load trending tokens")
+                .foregroundColor(AppTheme.colors.negative)
+                .frame(maxWidth: .infinity)
+                .padding()
+        }
+    }
+    
+    private func handleTokenSelection(_ token: JupiterToken, price: Double, priceChange: Double) {
+        let newToken = Token(
+            symbol: token.symbol,
+            name: token.name,
+            price: price,
+            priceChange24h: priceChange,
+            volume24h: token.daily_volume ?? 0,
+            logoURI: token.logoURI
+        )
+        
+        if !recentTokens.contains(where: { $0.id == newToken.id }) {
+            recentTokens.insert(newToken, at: 0)
+            if recentTokens.count > 5 {
+                recentTokens.removeLast()
+            }
+        }
+        selectedToken = newToken
+        showSwapView = true
+    }
+}
 
 // MARK: - Preview
 struct SearchView_Previews: PreviewProvider {

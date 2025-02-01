@@ -1,4 +1,5 @@
 import SwiftUI
+
 struct RecentTokenPill: View {
     let token: Token
     
@@ -9,21 +10,16 @@ struct RecentTokenPill: View {
                 .frame(width: 24, height: 24)
                 .overlay(
                     Group {
-                        if let logoURI = token.logoURI {
-                            AsyncImage(url: URL(string: logoURI)) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                            } placeholder: {
-                                ProgressView()
-                            }
+                        if let logoURI = token.logoURI,
+                           let url = URL(string: logoURI) {
+                            CachedTokenImage(url: url, size: 16)
                         } else {
                             Image(token.symbol.lowercased())
                                 .resizable()
                                 .scaledToFit()
+                                .frame(width: 16, height: 16)
                         }
                     }
-                    .frame(width: 16, height: 16)
                     .foregroundColor(.white)
                 )
             

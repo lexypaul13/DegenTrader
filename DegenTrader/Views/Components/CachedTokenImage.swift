@@ -6,6 +6,7 @@ struct CachedTokenImage: View {
     
     @State private var image: Image?
     @State private var isLoading = true
+    @State private var loadingTask: Task<Void, Never>?
     
     private let imageService: ImageCacheServiceProtocol
     
@@ -27,13 +28,33 @@ struct CachedTokenImage: View {
             }
         }
         .frame(width: size, height: size)
-        .task {
+        .onAppear {
+            loadImage()
+        }
+        .onDisappear {
+            loadingTask?.cancel()
+        }
+    }
+    
+    private func loadImage() {
+        // Cancel any existing task
+        loadingTask?.cancel()
+        
+        // Start new loading task
+        loadingTask = Task {
+            guard image == nil else { return }
+            
             do {
-                image = try await imageService.getImage(from: url)
+                let loadedImage = try await imageService.getImage(from: url)
+                if !Task.isCancelled {
+                    image = loadedImage
+                }
             } catch {
                 print("Error loading image: \(error)")
             }
-            isLoading = false
+            if !Task.isCancelled {
+                isLoading = false
+            }
         }
     }
 }
@@ -44,6 +65,7 @@ struct CachedAsyncImage: View {
     
     @State private var image: Image?
     @State private var isLoading = true
+    @State private var loadingTask: Task<Void, Never>?
     
     private let imageService: ImageCacheServiceProtocol
     
@@ -67,18 +89,38 @@ struct CachedAsyncImage: View {
                     .scaledToFit()
             }
         }
-        .task {
-            guard let url = url else {
-                isLoading = false
-                return
-            }
+        .onAppear {
+            loadImage()
+        }
+        .onDisappear {
+            loadingTask?.cancel()
+        }
+    }
+    
+    private func loadImage() {
+        guard let url = url else {
+            isLoading = false
+            return
+        }
+        
+        // Cancel any existing task
+        loadingTask?.cancel()
+        
+        // Start new loading task
+        loadingTask = Task {
+            guard image == nil else { return }
             
             do {
-                image = try await imageService.getImage(from: url)
+                let loadedImage = try await imageService.getImage(from: url)
+                if !Task.isCancelled {
+                    image = loadedImage
+                }
             } catch {
                 print("DEBUG: Failed to load image: \(error.localizedDescription)")
             }
-            isLoading = false
+            if !Task.isCancelled {
+                isLoading = false
+            }
         }
     }
 } 
