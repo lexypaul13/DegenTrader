@@ -156,8 +156,8 @@ struct SearchView: View {
             } else {
                 LazyVStack(spacing: 1) {
                     ForEach(searchViewModel.searchResults) { token in
-                        let price = trendingViewModel.getPrice(for: token)
-                        let priceChange = trendingViewModel.getPriceChange(for: token)
+                        let price = searchViewModel.getPrice(for: token)
+                        let priceChange = searchViewModel.getPriceChange(for: token)
                         
                         SearchTokenRow(
                             token: Token(
