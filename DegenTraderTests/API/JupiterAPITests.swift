@@ -9,7 +9,6 @@ final class JupiterAPITests: XCTestCase {
     @MainActor
     override func setUpWithError() throws {
         apiService = JupiterAPIService()
-        viewModel = TrendingTokensViewModel(apiService: apiService)
     }
     
     override func tearDownWithError() throws {

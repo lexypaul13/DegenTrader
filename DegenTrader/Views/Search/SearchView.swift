@@ -2,13 +2,19 @@ import SwiftUI
 
 struct SearchView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var searchText = ""
+    @StateObject private var searchViewModel: SearchViewModel
+    @StateObject private var trendingViewModel = TrendingTokensViewModel()
     @State private var showSwapView = false
     @State private var selectedToken: Token?
-    @StateObject private var trendingViewModel = TrendingTokensViewModel()
-    
-    // Only keeping recentTokens as state since trending comes from ViewModel
     @State public var recentTokens: [Token] = []
+    
+    init() {
+        let searchService = SearchService(
+            jupiterService: JupiterAPIService(),
+            memeCoinService: MemeCoinService()
+        )
+        _searchViewModel = StateObject(wrappedValue: SearchViewModel(searchService: searchService))
+    }
     
     var body: some View {
         NavigationStack {
@@ -20,9 +26,11 @@ struct SearchView: View {
                             .foregroundColor(AppTheme.colors.textSecondary)
                             .font(.system(size: 16))
                         
-                        TextField("Search", text: $searchText)
+                        TextField("Search", text: $searchViewModel.searchText)
                             .foregroundColor(AppTheme.colors.textPrimary)
                             .font(.system(size: 16))
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -30,6 +38,7 @@ struct SearchView: View {
                     .cornerRadius(16)
                     
                     Button("Cancel") {
+                        searchViewModel.clearSearch()
                         dismiss()
                     }
                     .foregroundColor(AppTheme.colors.textPrimary)
@@ -39,57 +48,11 @@ struct SearchView: View {
                 .padding(.vertical, 8)
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Recents Section
-                        if !recentTokens.isEmpty {
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    Text("Recents")
-                                        .font(.title2)
-                                        .foregroundColor(AppTheme.colors.textPrimary)
-                                        .padding(.vertical, 2)
-                                    
-                                    Spacer()
-                                    
-                                    Button("Clear") {
-                                        recentTokens.removeAll()
-                                    }
-                                    .foregroundColor(AppTheme.colors.textSecondary)
-                                }
-                                
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 12) {
-                                        ForEach(recentTokens) { token in
-                                            RecentTokenPill(token: token)
-                                        }
-                                    }
-                                }
-                            }
-                            .padding(.horizontal)
-                            .padding(.bottom)
-                        }
-                        
-                        // Trending Tokens List
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("Trending Meme Coins")
-                                    .font(.title2)
-                                    .foregroundColor(AppTheme.colors.textPrimary)
-                                
-                                Spacer()
-                                
-                                if case .loaded = trendingViewModel.state {
-                                    Text(trendingViewModel.lastUpdateText)
-                                        .font(.caption)
-                                        .foregroundColor(AppTheme.colors.textSecondary)
-                                }
-                            }
-                            .padding(.horizontal)
-                            
-                            TrendingTokensContent(viewModel: trendingViewModel, recentTokens: $recentTokens, selectedToken: $selectedToken, showSwapView: $showSwapView)
-                        }
+                    if searchViewModel.searchText.isEmpty {
+                        defaultContent
+                    } else {
+                        searchResultsContent
                     }
-                    .padding(.top)
                 }
             }
             .background(AppTheme.colors.background)
@@ -102,6 +65,137 @@ struct SearchView: View {
                 await trendingViewModel.fetchTrendingTokens()
             }
         }
+    }
+    
+    // MARK: - Content Views
+    private var defaultContent: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // Recents Section
+            if !recentTokens.isEmpty {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Recents")
+                            .font(.title2)
+                            .foregroundColor(AppTheme.colors.textPrimary)
+                            .padding(.vertical, 2)
+                        
+                        Spacer()
+                        
+                        Button("Clear") {
+                            recentTokens.removeAll()
+                        }
+                        .foregroundColor(AppTheme.colors.textSecondary)
+                    }
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(recentTokens) { token in
+                                RecentTokenPill(token: token)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            
+            // Trending Tokens List
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Trending Meme Coins")
+                        .font(.title2)
+                        .foregroundColor(AppTheme.colors.textPrimary)
+                    
+                    Spacer()
+                    
+                    if case .loaded = trendingViewModel.state {
+                        Text(trendingViewModel.lastUpdateText)
+                            .font(.caption)
+                            .foregroundColor(AppTheme.colors.textSecondary)
+                    }
+                }
+                .padding(.horizontal)
+                
+                TrendingTokensContent(
+                    viewModel: trendingViewModel,
+                    recentTokens: $recentTokens,
+                    selectedToken: $selectedToken,
+                    showSwapView: $showSwapView
+                )
+            }
+        }
+        .padding(.top)
+    }
+    
+    private var searchResultsContent: some View {
+        VStack {
+            if searchViewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            } else if let error = searchViewModel.error {
+                VStack(spacing: 16) {
+                    Text(error.localizedDescription)
+                        .foregroundColor(AppTheme.colors.negative)
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Retry") {
+                        searchViewModel.retry()
+                    }
+                    .foregroundColor(AppTheme.colors.accent)
+                }
+                .padding()
+            } else if searchViewModel.searchText.count < 3 {
+                Text("Enter at least 3 characters to search")
+                    .foregroundColor(AppTheme.colors.textSecondary)
+                    .padding()
+            } else if searchViewModel.searchResults.isEmpty {
+                Text("No results found")
+                    .foregroundColor(AppTheme.colors.textSecondary)
+                    .padding()
+            } else {
+                LazyVStack(spacing: 1) {
+                    ForEach(searchViewModel.searchResults) { token in
+                        let price = trendingViewModel.getPrice(for: token)
+                        let priceChange = trendingViewModel.getPriceChange(for: token)
+                        
+                        SearchTokenRow(
+                            token: Token(
+                                symbol: token.symbol,
+                                name: token.name,
+                                price: price,
+                                priceChange24h: priceChange,
+                                volume24h: token.daily_volume ?? 0,
+                                logoURI: token.logoURI
+                            )
+                        ) {
+                            handleTokenSelection(token, price: price, priceChange: priceChange)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    private func handleTokenSelection(_ token: JupiterToken, price: Double, priceChange: Double) {
+        let newToken = Token(
+            symbol: token.symbol,
+            name: token.name,
+            price: price,
+            priceChange24h: priceChange,
+            volume24h: token.daily_volume ?? 0,
+            logoURI: token.logoURI
+        )
+        
+        if !recentTokens.contains(where: { $0.id == newToken.id }) {
+            recentTokens.insert(newToken, at: 0)
+            if recentTokens.count > 5 {
+                recentTokens.removeLast()
+            }
+        }
+        selectedToken = newToken
+        showSwapView = true
     }
 }
 
