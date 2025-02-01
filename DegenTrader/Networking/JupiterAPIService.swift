@@ -1,13 +1,9 @@
 import Foundation
 import Alamofire
 
-// MARK: - Protocols
+// MARK: - Protocol
 protocol JupiterAPIServiceProtocol {
     func fetchTrendingTokens() async throws -> [JupiterToken]
-}
-
-protocol NetworkRequestable {
-    func performRequest<T: Decodable>(_ endpoint: String, method: HTTPMethod, parameters: Parameters?) async throws -> T
 }
 
 // MARK: - Implementation
@@ -38,24 +34,9 @@ final class JupiterAPIService: NetworkRequestable {
 extension JupiterAPIService: JupiterAPIServiceProtocol {
     func fetchTrendingTokens() async throws -> [JupiterToken] {
         let parameters: Parameters = ["tags": "birdeye-trending"]
-        return try await performRequest("/tokens", parameters: parameters)
+        return try await performRequest("/tokens", 
+                                      method: .get,
+                                      parameters: parameters)
     }
 }
 
-// MARK: - Errors
-enum NetworkError: LocalizedError {
-    case requestFailed(Error)
-    case invalidResponse
-    case invalidData
-    
-    var errorDescription: String? {
-        switch self {
-        case .requestFailed(let error):
-            return "Request failed: \(error.localizedDescription)"
-        case .invalidResponse:
-            return "Invalid response from server"
-        case .invalidData:
-            return "Invalid data received"
-        }
-    }
-} 
