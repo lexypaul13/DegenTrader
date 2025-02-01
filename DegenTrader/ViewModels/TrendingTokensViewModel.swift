@@ -46,6 +46,8 @@ final class TrendingTokensViewModel: ObservableObject, TrendingTokensViewModelPr
     private let cacheTimeout: TimeInterval = 300 // 5 minutes
     private var autoUpdateTask: Task<Void, Never>?
     private var priceUpdateTask: Task<Void, Never>?
+    private var lastPriceUpdateTime: Date?
+    private let priceUpdateInterval: TimeInterval = 30 // 30 seconds between updates
     
     private let tokensPerPage = 10
     private let maxPages = 3
@@ -73,12 +75,37 @@ final class TrendingTokensViewModel: ObservableObject, TrendingTokensViewModelPr
             }
         }
         
-        // Update prices more frequently
+        // Update prices every 30 seconds
         priceUpdateTask = Task {
             while !Task.isCancelled {
                 await updatePrices()
-                try? await Task.sleep(nanoseconds: UInt64(30 * 1_000_000_000)) // 30 seconds
+                try? await Task.sleep(nanoseconds: UInt64(priceUpdateInterval * 1_000_000_000))
             }
+        }
+    }
+    
+    private func updatePrices() async {
+        guard !memeCoins.isEmpty else { return }
+        
+        // Basic rate limiting check
+        if let lastUpdate = lastPriceUpdateTime,
+           Date().timeIntervalSince(lastUpdate) < priceUpdateInterval {
+            return
+        }
+        
+        await updatePricesImmediately()
+    }
+    
+    private func updatePricesImmediately() async {
+        do {
+            let addresses = memeCoins.map { $0.address }
+            tokenPrices = try await priceService.fetchTokenPrices(addresses: addresses)
+            lastPriceUpdateTime = Date()
+            lastFetchTime = Date()
+            updateLastUpdateText()
+            objectWillChange.send()
+        } catch {
+            print("DEBUG: Failed to update prices: \(error.localizedDescription)")
         }
     }
     
@@ -114,18 +141,6 @@ final class TrendingTokensViewModel: ObservableObject, TrendingTokensViewModelPr
         }
     }
     
-    private func updatePrices() async {
-        guard !memeCoins.isEmpty else { return }
-        
-        do {
-            let addresses = memeCoins.map { $0.address }
-            tokenPrices = try await priceService.fetchTokenPrices(addresses: addresses)
-            objectWillChange.send()
-        } catch {
-            print("DEBUG: Failed to update prices: \(error.localizedDescription)")
-        }
-    }
-    
     func getPrice(for token: JupiterToken) -> Double {
         tokenPrices[token.address]?.price ?? 0.0
     }
@@ -158,15 +173,15 @@ final class TrendingTokensViewModel: ObservableObject, TrendingTokensViewModelPr
         currentPage = nextPage
         hasMorePages = allMemeCoins.count > memeCoins.count && currentPage < maxPages
         
-        // Update prices for new tokens
-        await updatePrices()
+        // Update prices immediately for new tokens
+        await updatePricesImmediately()
         state = .loaded
     }
     
     private func updateLastUpdateText() {
         if let lastFetch = lastFetchTime {
             let formatter = RelativeDateTimeFormatter()
-            formatter.unitsStyle = .full
+            formatter.unitsStyle = .abbreviated
             lastUpdateText = "Updated " + formatter.localizedString(for: lastFetch, relativeTo: Date())
         }
     }
@@ -185,5 +200,14 @@ extension JupiterToken {
         
         formatter.dateStyle = .medium
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Array Extension for Chunking
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0 ..< Swift.min($0 + size, count)])
+        }
     }
 } 

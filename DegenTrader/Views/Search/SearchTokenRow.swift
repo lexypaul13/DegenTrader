@@ -4,6 +4,31 @@ struct SearchTokenRow: View {
     let token: Token
     let onSwapTap: () -> Void
     
+    private var formattedPrice: String {
+        if token.price < 0.00001 {
+            return String(format: "$%.8f", token.price)
+        } else if token.price < 0.01 {
+            return String(format: "$%.6f", token.price)
+        } else if token.price < 1 {
+            return String(format: "$%.4f", token.price)
+        } else if token.price < 1000 {
+            return String(format: "$%.2f", token.price)
+        } else {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.maximumFractionDigits = 2
+            return formatter.string(from: NSNumber(value: token.price)) ?? "$\(token.price)"
+        }
+    }
+    
+    private var formattedPriceChange: String {
+        if abs(token.priceChange24h) < 0.01 {
+            return String(format: "%.3f", token.priceChange24h)
+        } else {
+            return String(format: "%.2f", token.priceChange24h)
+        }
+    }
+    
     var body: some View {
         HStack(spacing: 16) {
             // Token Icon with AsyncImage
@@ -30,26 +55,32 @@ struct SearchTokenRow: View {
                 Text(token.name)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(AppTheme.colors.textPrimary)
+                    .lineLimit(1)
                 
                 HStack(spacing: 8) {
                     Text(token.symbol)
+                        .font(.system(size: 15))
                         .foregroundColor(AppTheme.colors.textSecondary)
+                        .lineLimit(1)
+                    
                     Text("•")
+                        .font(.system(size: 15))
                         .foregroundColor(AppTheme.colors.textSecondary)
-                    if token.price < 0.01 {
-                        Text("$\(token.price, specifier: "%.8f")")
-                            .foregroundColor(AppTheme.colors.textSecondary)
-                    } else {
-                        Text("$\(token.price, specifier: "%.2f")")
-                            .foregroundColor(AppTheme.colors.textSecondary)
-                    }
-                    Text("\(token.priceChange24h >= 0 ? "+" : "")\(token.priceChange24h, specifier: "%.2f")%")
+                    
+                    Text(formattedPrice)
+                        .font(.system(size: 15))
+                        .foregroundColor(AppTheme.colors.textSecondary)
+                        .lineLimit(1)
+                    
+                    Text("\(token.priceChange24h >= 0 ? "+" : "")\(formattedPriceChange)%")
+                        .font(.system(size: 15))
                         .foregroundColor(token.priceChange24h >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                        .lineLimit(1)
                 }
-                .font(.system(size: 15))
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             
-            Spacer()
+            Spacer(minLength: 16)
             
             // Swap Button
             Button(action: onSwapTap) {
@@ -58,8 +89,10 @@ struct SearchTokenRow: View {
                     .padding(8)
                     .background(Circle().fill(AppTheme.colors.cardBackground))
             }
+            .padding(.leading, 4)
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(AppTheme.colors.background)
     }
 }
