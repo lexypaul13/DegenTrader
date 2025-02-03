@@ -56,11 +56,13 @@ struct AlertCard: View {
 
 #Preview {
     let sampleToken = Token(
+        address: "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
         symbol: "BTC",
         name: "Bitcoin",
         price: 50000.00,
         priceChange24h: 2.5,
-        volume24h: 1_500_000, logoURI: nil
+        volume24h: 1_500_000,
+        logoURI: nil
     )
     
     VStack(spacing: 16) {

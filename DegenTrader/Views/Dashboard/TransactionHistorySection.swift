@@ -112,8 +112,24 @@ struct TransactionRow: View {
 //            Transaction(
 //                date: Date(),
 //                type: .swapped,
-//                fromToken: Token(symbol: "SOL", name: "Solana", price: 1.18, priceChange24h: -2.41, volume24h: 1_000_000),
-//                toToken: Token(symbol: "JEFFY", name: "Jeffy", price: 0.36, priceChange24h: -5.28, volume24h: 500_000),
+//                fromToken: Token(
+//                    address: "So11111111111111111111111111111111111111112",
+//                    symbol: "SOL",
+//                    name: "Solana",
+//                    price: 1.18,
+//                    priceChange24h: -2.41,
+//                    volume24h: 1_000_000,
+//                    logoURI: nil
+//                ),
+//                toToken: Token(
+//                    address: "JFYJQqHzMz8gJrLpHQXqE7Zi4bJh3WYqYGHgBPzptEYg",
+//                    symbol: "JEFFY",
+//                    name: "Jeffy",
+//                    price: 0.36,
+//                    priceChange24h: -5.28,
+//                    volume24h: 500_000,
+//                    logoURI: nil
+//                ),
 //                fromAmount: 0.04291,
 //                toAmount: 7133.29855
 //            )

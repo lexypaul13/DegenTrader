@@ -43,7 +43,8 @@ final class DexScreenerAPIService: NetworkRequestable, DexScreenerAPIServiceProt
         for response in responses {
             prices[response.baseToken.address] = TokenPrice(
                 price: response.usdPrice,
-                priceChange24h: response.priceChange.h24
+                priceChange24h: response.priceChange.h24,
+                volume24h: response.volume24h
             )
         }
         

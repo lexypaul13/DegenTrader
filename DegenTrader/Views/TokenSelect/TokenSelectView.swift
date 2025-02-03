@@ -7,7 +7,15 @@ struct TokenSelectView: View {
     @State private var searchText = ""
     
     private let tokens: [Token] = [
-        Token(symbol: "SOL", name: "Solana", price: 0.0, priceChange24h: 0.0, volume24h: 0.0, logoURI: nil)
+        Token(
+            address: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            price: 0.0,
+            priceChange24h: 0.0,
+            volume24h: 0.0,
+            logoURI: nil
+        )
     ]
     
     private var filteredTokens: [Token] {

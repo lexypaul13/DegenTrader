@@ -1,62 +1,29 @@
 import SwiftUI
+import Kingfisher
 
 struct CachedTokenImage: View {
     let url: URL
-    let size: CGFloat
-    
-    @State private var image: Image?
-    @State private var isLoading = true
-    @State private var loadingTask: Task<Void, Never>?
-    
-    private let imageService: ImageCacheServiceProtocol
-    
-    init(url: URL, size: CGFloat = 32, imageService: ImageCacheServiceProtocol = ImageCacheService.shared) {
-        self.url = url
-        self.size = size
-        self.imageService = imageService
-    }
     
     var body: some View {
-        Group {
-            if let image = image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                ProgressView()
-                    .opacity(isLoading ? 1 : 0)
+        KFImage.url(url)
+            .placeholder {
+                Circle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 24, height: 24)
             }
-        }
-        .frame(width: size, height: size)
-        .onAppear {
-            loadImage()
-        }
-        .onDisappear {
-            loadingTask?.cancel()
-        }
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24, height: 24)
     }
-    
-    private func loadImage() {
-        // Cancel any existing task
-        loadingTask?.cancel()
-        
-        // Start new loading task
-        loadingTask = Task {
-            guard image == nil else { return }
-            
-            do {
-                let loadedImage = try await imageService.getImage(from: url)
-                if !Task.isCancelled {
-                    image = loadedImage
-                }
-            } catch {
-                print("Error loading image: \(error)")
-            }
-            if !Task.isCancelled {
-                isLoading = false
-            }
-        }
-    }
+}
+
+#Preview {
+    CachedTokenImage(
+        url: URL(string: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png")!
+    )
+    .padding()
+    .background(Color.black)
+    .preferredColorScheme(.dark)
 }
 
 struct CachedAsyncImage: View {

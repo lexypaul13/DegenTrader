@@ -1,6 +1,7 @@
 import Foundation
 
 struct Token: Identifiable, Codable, Hashable {
+    let address: String
     let symbol: String
     let name: String
     let price: Double
@@ -8,9 +9,10 @@ struct Token: Identifiable, Codable, Hashable {
     let volume24h: Double
     let logoURI: String?
     
-    var id: String { symbol }
+    var id: String { address }
     
-    init(symbol: String, name: String, price: Double, priceChange24h: Double, volume24h: Double, logoURI: String?) {
+    init(address: String, symbol: String, name: String, price: Double, priceChange24h: Double, volume24h: Double, logoURI: String?) {
+        self.address = address
         self.symbol = symbol
         self.name = name
         self.price = price
@@ -43,5 +45,4 @@ struct Portfolio {
     let tokens: [PortfolioToken]
     let profitLoss: Double
     let profitLossPercentage: Double
-
 }

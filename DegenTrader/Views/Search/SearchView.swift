@@ -5,6 +5,7 @@ struct SearchView: View {
     @StateObject private var searchViewModel: SearchViewModel
     @StateObject private var trendingViewModel = TrendingTokensViewModel()
     @State private var showSwapView = false
+    @State private var showTokenDetail = false
     @State private var selectedToken: Token?
     @State public var recentTokens: [Token] = []
     
@@ -59,6 +60,11 @@ struct SearchView: View {
             .navigationDestination(isPresented: $showSwapView) {
                 if let token = selectedToken {
                     SwapView(selectedFromToken: token)
+                }
+            }
+            .navigationDestination(isPresented: $showTokenDetail) {
+                if let token = selectedToken {
+                    TokenDetailView(token: token)
                 }
             }
             .task {
@@ -120,7 +126,8 @@ struct SearchView: View {
                     viewModel: trendingViewModel,
                     recentTokens: $recentTokens,
                     selectedToken: $selectedToken,
-                    showSwapView: $showSwapView
+                    showSwapView: $showSwapView,
+                    showTokenDetail: $showTokenDetail
                 )
             }
         }
@@ -161,6 +168,7 @@ struct SearchView: View {
                         
                         SearchTokenRow(
                             token: Token(
+                                address: token.address,
                                 symbol: token.symbol,
                                 name: token.name,
                                 price: price,
@@ -169,7 +177,11 @@ struct SearchView: View {
                                 logoURI: token.logoURI
                             )
                         ) {
-                            handleTokenSelection(token, price: price, priceChange: priceChange)
+                            handleTokenSelection(token, price: price, priceChange: priceChange, forSwap: true)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            handleTokenSelection(token, price: price, priceChange: priceChange, forSwap: false)
                         }
                     }
                 }
@@ -178,8 +190,9 @@ struct SearchView: View {
     }
     
     // MARK: - Helper Methods
-    private func handleTokenSelection(_ token: JupiterToken, price: Double, priceChange: Double) {
+    private func handleTokenSelection(_ token: JupiterToken, price: Double, priceChange: Double, forSwap: Bool) {
         let newToken = Token(
+            address: token.address,
             symbol: token.symbol,
             name: token.name,
             price: price,
@@ -195,8 +208,108 @@ struct SearchView: View {
             }
         }
         selectedToken = newToken
-        showSwapView = true
+        if forSwap {
+            showSwapView = true
+        } else {
+            showTokenDetail = true
+        }
     }
+    
+    private let mockTrendingTokens = [
+        Token(
+            address: "TRUMPjzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "TRUMP",
+            name: "OFFICIAL TRUMP",
+            price: 49.00,
+            priceChange24h: 41.95,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "MELANIAzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "MELANIA",
+            name: "Melania Meme",
+            price: 8.01,
+            priceChange24h: 7.8,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "USAzzzzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "USA",
+            name: "American Coin",
+            price: 0.00001309,
+            priceChange24h: 212.75,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "MRBEASTzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "MR BEAST",
+            name: "OFFICIAL MR BEAST",
+            price: 0.00165924,
+            priceChange24h: 21974.04,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "ELONzzzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "ELON",
+            name: "Official Elon Coin",
+            price: 0.0345,
+            priceChange24h: -58.88,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "SATOSHIzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "SATOSHI",
+            name: "Official Satoshi Coin",
+            price: 0.00257009,
+            priceChange24h: 2190.45,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "DOLLARzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "$1",
+            name: "just buy $1 worth of this coin",
+            price: 0.0476,
+            priceChange24h: 1781.16,
+            volume24h: 0,
+            logoURI: nil
+        )
+    ]
+    
+    private let mockRecentTokens = [
+        Token(
+            address: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            price: 228.62,
+            priceChange24h: -3.5,
+            volume24h: 1_000_000,
+            logoURI: nil
+        ),
+        Token(
+            address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+            symbol: "USDT",
+            name: "Tether USD",
+            price: 1.00,
+            priceChange24h: 0.01,
+            volume24h: 500_000,
+            logoURI: nil
+        ),
+        Token(
+            address: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+            symbol: "JitoSOL",
+            name: "Jito Staked SOL",
+            price: 263.83,
+            priceChange24h: -3.54,
+            volume24h: 750_000,
+            logoURI: nil
+        )
+    ]
 }
 
 // MARK: - Trending Tokens Content
@@ -205,6 +318,7 @@ private struct TrendingTokensContent: View {
     @Binding var recentTokens: [Token]
     @Binding var selectedToken: Token?
     @Binding var showSwapView: Bool
+    @Binding var showTokenDetail: Bool
     
     var body: some View {
         switch viewModel.state {
@@ -221,6 +335,7 @@ private struct TrendingTokensContent: View {
                     
                     SearchTokenRow(
                         token: Token(
+                            address: token.address,
                             symbol: token.symbol,
                             name: token.name,
                             price: price,
@@ -229,7 +344,11 @@ private struct TrendingTokensContent: View {
                             logoURI: token.logoURI
                         )
                     ) {
-                        handleTokenSelection(token, price: price, priceChange: priceChange)
+                        handleTokenSelection(token, price: price, priceChange: priceChange, forSwap: true)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        handleTokenSelection(token, price: price, priceChange: priceChange, forSwap: false)
                     }
                 }
                 
@@ -259,8 +378,9 @@ private struct TrendingTokensContent: View {
         }
     }
     
-    private func handleTokenSelection(_ token: JupiterToken, price: Double, priceChange: Double) {
+    private func handleTokenSelection(_ token: JupiterToken, price: Double, priceChange: Double, forSwap: Bool) {
         let newToken = Token(
+            address: token.address,
             symbol: token.symbol,
             name: token.name,
             price: price,
@@ -276,26 +396,110 @@ private struct TrendingTokensContent: View {
             }
         }
         selectedToken = newToken
-        showSwapView = true
+        if forSwap {
+            showSwapView = true
+        } else {
+            showTokenDetail = true
+        }
     }
 }
 
 // MARK: - Preview
 struct SearchView_Previews: PreviewProvider {
     static var previewTrendingTokens = [
-        Token(symbol: "TRUMP", name: "OFFICIAL TRUMP", price: 49.00, priceChange24h: 41.95, volume24h: 0, logoURI: nil),
-        Token(symbol: "MELANIA", name: "Melania Meme", price: 8.01, priceChange24h: 7.8, volume24h: 0, logoURI: nil),
-        Token(symbol: "USA", name: "American Coin", price: 0.00001309, priceChange24h: 212.75, volume24h: 0, logoURI: nil),
-        Token(symbol: "MR BEAST", name: "OFFICIAL MR BEAST", price: 0.00165924, priceChange24h: 21974.04, volume24h: 0, logoURI: nil),
-        Token(symbol: "ELON", name: "Official Elon Coin", price: 0.0345, priceChange24h: -58.88, volume24h: 0, logoURI: nil),
-        Token(symbol: "SATOSHI", name: "Official Satoshi Coin", price: 0.00257009, priceChange24h: 2190.45, volume24h: 0, logoURI: nil),
-        Token(symbol: "$1", name: "just buy $1 worth of this coin", price: 0.0476, priceChange24h: 1781.16, volume24h: 0, logoURI: nil)
+        Token(
+            address: "TRUMPjzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "TRUMP",
+            name: "OFFICIAL TRUMP",
+            price: 49.00,
+            priceChange24h: 41.95,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "MELANIAzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "MELANIA",
+            name: "Melania Meme",
+            price: 8.01,
+            priceChange24h: 7.8,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "USAzzzzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "USA",
+            name: "American Coin",
+            price: 0.00001309,
+            priceChange24h: 212.75,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "MRBEASTzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "MR BEAST",
+            name: "OFFICIAL MR BEAST",
+            price: 0.00165924,
+            priceChange24h: 21974.04,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "ELONzzzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "ELON",
+            name: "Official Elon Coin",
+            price: 0.0345,
+            priceChange24h: -58.88,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "SATOSHIzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "SATOSHI",
+            name: "Official Satoshi Coin",
+            price: 0.00257009,
+            priceChange24h: 2190.45,
+            volume24h: 0,
+            logoURI: nil
+        ),
+        Token(
+            address: "DOLLARzzzz5V7f3kDXZcUUiyfG9WGaayV2E",
+            symbol: "$1",
+            name: "just buy $1 worth of this coin",
+            price: 0.0476,
+            priceChange24h: 1781.16,
+            volume24h: 0,
+            logoURI: nil
+        )
     ]
     
     static var previewRecentTokens = [
-        Token(symbol: "SOL", name: "Solana", price: 228.62, priceChange24h: -3.5, volume24h: 1_000_000, logoURI: nil),
-        Token(symbol: "USDT", name: "Tether USD", price: 1.00, priceChange24h: 0.01, volume24h: 500_000, logoURI: nil),
-        Token(symbol: "JitoSOL", name: "Jito Staked SOL", price: 263.83, priceChange24h: -3.54, volume24h: 750_000, logoURI: nil)
+        Token(
+            address: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            price: 228.62,
+            priceChange24h: -3.5,
+            volume24h: 1_000_000,
+            logoURI: nil
+        ),
+        Token(
+            address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+            symbol: "USDT",
+            name: "Tether USD",
+            price: 1.00,
+            priceChange24h: 0.01,
+            volume24h: 500_000,
+            logoURI: nil
+        ),
+        Token(
+            address: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+            symbol: "JitoSOL",
+            name: "Jito Staked SOL",
+            price: 263.83,
+            priceChange24h: -3.54,
+            volume24h: 750_000,
+            logoURI: nil
+        )
     ]
     
     static var previews: some View {

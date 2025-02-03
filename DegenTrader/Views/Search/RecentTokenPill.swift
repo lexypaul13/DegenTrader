@@ -12,7 +12,7 @@ struct RecentTokenPill: View {
                     Group {
                         if let logoURI = token.logoURI,
                            let url = URL(string: logoURI) {
-                            CachedTokenImage(url: url, size: 16)
+                            CachedTokenImage(url: url)
                         } else {
                             Image(token.symbol.lowercased())
                                 .resizable()

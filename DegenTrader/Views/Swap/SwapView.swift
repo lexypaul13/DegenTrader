@@ -7,7 +7,15 @@ struct SwapView: View {
     @State private var showFromTokenSelect = false
     @State private var showToTokenSelect = false
     @State private var selectedFromToken: Token
-    @State private var selectedToToken = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil )
+    @State private var selectedToToken = Token(
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        symbol: "USDC",
+        name: "USD Coin",
+        price: 1.00,
+        priceChange24h: 0.01,
+        volume24h: 750_000,
+        logoURI: nil
+    )
     @State private var isSwapping = false
     @State private var rotationAngle: Double = 0
     @Environment(\.dismiss) private var dismiss
@@ -19,8 +27,15 @@ struct SwapView: View {
         case from, to
     }
 
-    init(selectedFromToken: Token = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil),
-         fromAmount: String = "0.001231039") {
+    init(selectedFromToken: Token = Token(
+        address: "JFYJQqHzMz8gJrLpHQXqE7Zi4bJh3WYqYGHgBPzptEYg",
+        symbol: "OMNI",
+        name: "Omni",
+        price: 0.36,
+        priceChange24h: -5.28,
+        volume24h: 500_000,
+        logoURI: nil
+    ), fromAmount: String = "0.001231039") {
         _selectedFromToken = State(initialValue: selectedFromToken)
         _fromAmount = State(initialValue: fromAmount)
     }
@@ -342,8 +357,15 @@ struct PercentageButtonsView: View {
 
 #Preview {
     NavigationView {
-        SwapView(selectedFromToken: Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil ),
-                fromAmount: "0.001231039")
+        SwapView(selectedFromToken: Token(
+            address: "JFYJQqHzMz8gJrLpHQXqE7Zi4bJh3WYqYGHgBPzptEYg",
+            symbol: "OMNI",
+            name: "Omni",
+            price: 0.36,
+            priceChange24h: -5.28,
+            volume24h: 500_000,
+            logoURI: nil
+        ), fromAmount: "0.001231039")
     }
     .preferredColorScheme(.dark)
 }

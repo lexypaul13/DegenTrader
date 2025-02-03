@@ -8,6 +8,7 @@ struct DexScreenerResponse: Codable {
     let priceNative: String
     let priceUsd: String
     let priceChange: PriceChange
+    let volume24h: Double?
     
     struct BaseToken: Codable {
         let address: String

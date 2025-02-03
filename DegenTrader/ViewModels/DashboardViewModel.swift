@@ -7,11 +7,13 @@ class DashboardViewModel: ObservableObject {
     private let walletManager = WalletManager.shared
     
     private let solToken = Token(
+        address: "So11111111111111111111111111111111111111112",
         symbol: "SOL",
         name: "Solana",
         price: 0.0,
         priceChange24h: 0.0,
-        volume24h: 0.0, logoURI: nil
+        volume24h: 0.0,
+        logoURI: nil
     )
     
     init() {
