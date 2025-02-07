@@ -6,12 +6,12 @@ struct TokenDetailView: View {
     @StateObject private var walletManager = WalletManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showPriceAlert = false
+    @State private var showSwapView = false
     @State private var isRefreshing = false
     
     init(token: Token) {
         self.token = token
         let service = TokenDetailService(
-            jupiterService: JupiterAPIService(),
             dexScreenerService: DexScreenerAPIService()
         )
         _viewModel = StateObject(wrappedValue: TokenDetailViewModel(tokenDetailService: service))
@@ -27,16 +27,16 @@ struct TokenDetailView: View {
             ) {
                 Group {
                     switch viewModel.state {
-                    case .loading:
+                    case .loading where viewModel.tokenDetail == nil:
                         loadingView
                     case .error:
                         errorView
-                    case .loaded:
+                    case .loaded, .loading:
                         contentView
                     case .idle:
-                        EmptyView()
+                        loadingView
                     case .loadingMore:
-                        contentView // Show the content while loading more
+                        contentView
                     }
                 }
             }
@@ -66,8 +66,17 @@ struct TokenDetailView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
-        .task {
-            await viewModel.loadTokenDetails(address: token.address)
+        .sheet(isPresented: $showSwapView) {
+            NavigationView {
+                SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))
+            }
+        }
+        .onAppear {
+            if viewModel.tokenDetail == nil {
+                Task {
+                    await viewModel.loadTokenDetails(address: token.address)
+                }
+            }
         }
     }
     
@@ -118,22 +127,21 @@ struct TokenDetailView: View {
     private var contentView: some View {
         VStack(spacing: 24) {
             if let details = viewModel.tokenDetail {
-                // Chart Section
-                TokenChartView(token: token)
-                    .padding(.top, 16)
+                // Chart Section with Price
+                TokenChartView(
+                    token: token,
+                    chartData: details.chartData
+                )
                 
                 // Action Buttons
                 actionButtons
                     .padding(.top, 8)
                 
-                // Balance Section
+                // Your Balance Section
                 balanceSection(details: details)
                 
                 // Info Section
                 infoSection(details: details)
-                
-                // 24h Performance Section
-                performanceSection(details: details)
             }
         }
         .padding(.vertical, 24)
@@ -141,11 +149,9 @@ struct TokenDetailView: View {
     
     // MARK: - Helper Views
     private var actionButtons: some View {
-        HStack(spacing: 30) {
+        HStack(spacing: 70) {
             // Swap Button
-            NavigationLink {
-                SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))
-            } label: {
+            NavigationLink(destination: SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))) {
                 ActionButton(
                     imageName: "arrow.left.arrow.right",
                     title: "Swap"
@@ -187,7 +193,7 @@ struct TokenDetailView: View {
                         .frame(width: 40, height: 40)
                         .overlay(
                             Group {
-                                if let logoURI = details.metadata.logoURI,
+                                if let logoURI = token.logoURI,
                                    let url = URL(string: logoURI) {
                                     CachedTokenImage(url: url)
                                 } else {
@@ -201,11 +207,11 @@ struct TokenDetailView: View {
                         )
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(details.metadata.name)
+                        Text(token.name)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
                         
-                        Text("\(String(format: "%.5f", walletManager.getBalance(for: token.symbol))) \(details.metadata.symbol)")
+                        Text("\(String(format: "%.5f", walletManager.getBalance(for: token.symbol))) \(token.symbol)")
                             .font(.system(size: 14))
                             .foregroundColor(.gray)
                     }
@@ -239,39 +245,11 @@ struct TokenDetailView: View {
                 .foregroundColor(.gray)
             
             VStack(spacing: 0) {
-                TokenInfoRow(title: "Mint", value: details.metadata.address.prefix(6) + "..." + details.metadata.address.suffix(4))
+                TokenInfoRow(title: "Mint", value: token.address.prefix(6) + "..." + token.address.suffix(4))
                 Divider().background(Color.gray.opacity(0.3))
                 TokenInfoRow(title: "Market Cap", value: details.marketData.marketCap.map { String(format: "$%.2f", $0) } ?? "N/A")
                 Divider().background(Color.gray.opacity(0.3))
-                TokenInfoRow(title: "Total Supply", value: details.metadata.totalSupply.map { String(format: "%.2f", $0) } ?? "N/A")
-                Divider().background(Color.gray.opacity(0.3))
                 TokenInfoRow(title: "Volume (24h)", value: details.marketData.volume24h.map { String(format: "$%.2f", $0) } ?? "N/A")
-            }
-            .padding(16)
-            .background(AppTheme.colors.cardBackground)
-            .cornerRadius(12)
-        }
-        .padding(.horizontal)
-    }
-    
-    private func performanceSection(details: TokenDetail) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("24h Performance")
-                .font(.system(size: 24))
-                .foregroundColor(.gray)
-            
-            VStack(spacing: 0) {
-                TokenPerformanceRow(
-                    title: "Price",
-                    value: String(format: "$%.8f", details.priceData.currentPrice),
-                    change: details.priceData.priceChange24h
-                )
-                Divider().background(Color.gray.opacity(0.3))
-                TokenPerformanceRow(
-                    title: "Volume",
-                    value: details.marketData.volume24h.map { String(format: "$%.2f", $0) } ?? "N/A",
-                    change: 0 // TODO: Add volume change
-                )
             }
             .padding(16)
             .background(AppTheme.colors.cardBackground)
