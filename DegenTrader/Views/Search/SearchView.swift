@@ -5,6 +5,7 @@ struct SearchView: View {
     @StateObject private var searchViewModel: SearchViewModel
     @StateObject private var trendingViewModel = TrendingTokensViewModel()
     @State private var showSwapView = false
+    @State private var showTokenDetail = false
     @State private var selectedToken: Token?
     @State public var recentTokens: [Token] = []
     
@@ -59,6 +60,11 @@ struct SearchView: View {
             .navigationDestination(isPresented: $showSwapView) {
                 if let token = selectedToken {
                     SwapView(selectedFromToken: token)
+                }
+            }
+            .navigationDestination(isPresented: $showTokenDetail) {
+                if let token = selectedToken {
+                    TokenDetailView(token: token)
                 }
             }
             .task {
@@ -120,7 +126,8 @@ struct SearchView: View {
                     viewModel: trendingViewModel,
                     recentTokens: $recentTokens,
                     selectedToken: $selectedToken,
-                    showSwapView: $showSwapView
+                    showSwapView: $showSwapView,
+                    showTokenDetail: $showTokenDetail
                 )
             }
         }
@@ -158,19 +165,26 @@ struct SearchView: View {
                     ForEach(searchViewModel.searchResults) { token in
                         let price = searchViewModel.getPrice(for: token)
                         let priceChange = searchViewModel.getPriceChange(for: token)
+                        let newToken = Token(
+                            symbol: token.symbol,
+                            name: token.name,
+                            price: price,
+                            priceChange24h: priceChange,
+                            volume24h: token.daily_volume ?? 0,
+                            logoURI: token.logoURI
+                        )
                         
                         SearchTokenRow(
-                            token: Token(
-                                symbol: token.symbol,
-                                name: token.name,
-                                price: price,
-                                priceChange24h: priceChange,
-                                volume24h: token.daily_volume ?? 0,
-                                logoURI: token.logoURI
-                            )
-                        ) {
-                            handleTokenSelection(token, price: price, priceChange: priceChange)
-                        }
+                            token: newToken,
+                            onSwapTap: {
+                                selectedToken = newToken
+                                showSwapView = true
+                            },
+                            onRowTap: {
+                                selectedToken = newToken
+                                showTokenDetail = true
+                            }
+                        )
                     }
                 }
             }
@@ -205,6 +219,7 @@ private struct TrendingTokensContent: View {
     @Binding var recentTokens: [Token]
     @Binding var selectedToken: Token?
     @Binding var showSwapView: Bool
+    @Binding var showTokenDetail: Bool
     
     var body: some View {
         switch viewModel.state {
@@ -218,19 +233,26 @@ private struct TrendingTokensContent: View {
                 ForEach(viewModel.memeCoins) { token in
                     let price = viewModel.getPrice(for: token)
                     let priceChange = viewModel.getPriceChange(for: token)
+                    let newToken = Token(
+                        symbol: token.symbol,
+                        name: token.name,
+                        price: price,
+                        priceChange24h: priceChange,
+                        volume24h: token.daily_volume ?? 0,
+                        logoURI: token.logoURI
+                    )
                     
                     SearchTokenRow(
-                        token: Token(
-                            symbol: token.symbol,
-                            name: token.name,
-                            price: price,
-                            priceChange24h: priceChange,
-                            volume24h: token.daily_volume ?? 0,
-                            logoURI: token.logoURI
-                        )
-                    ) {
-                        handleTokenSelection(token, price: price, priceChange: priceChange)
-                    }
+                        token: newToken,
+                        onSwapTap: {
+                            selectedToken = newToken
+                            showSwapView = true
+                        },
+                        onRowTap: {
+                            selectedToken = newToken
+                            showTokenDetail = true
+                        }
+                    )
                 }
                 
                 if viewModel.hasMorePages {
