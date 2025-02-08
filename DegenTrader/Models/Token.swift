@@ -7,16 +7,18 @@ struct Token: Identifiable, Codable, Hashable {
     let priceChange24h: Double
     let volume24h: Double
     let logoURI: String?
+    let address: String
     
     var id: String { symbol }
     
-    init(symbol: String, name: String, price: Double, priceChange24h: Double, volume24h: Double, logoURI: String?) {
+    init(symbol: String, name: String, price: Double, priceChange24h: Double, volume24h: Double, logoURI: String?, address: String? = nil) {
         self.symbol = symbol
         self.name = name
         self.price = price
         self.priceChange24h = priceChange24h
         self.volume24h = volume24h
         self.logoURI = logoURI
+        self.address = address ?? "So11111111111111111111111111111111111111112"
     }
     
     func hash(into hasher: inout Hasher) {

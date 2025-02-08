@@ -3,8 +3,14 @@ import SwiftUI
 struct TokenDetailView: View {
     let token: Token
     @StateObject private var walletManager = WalletManager.shared
+    @ObservedObject var viewModel: TokenDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showPriceAlert = false
+    
+    init(token: Token, viewModel: TokenDetailViewModel = TokenDetailViewModel(apiService: DexScreenerAPIService())) {
+        self.token = token
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
+    }
     
     var body: some View {
         ScrollView {
@@ -130,20 +136,43 @@ struct TokenDetailView: View {
                         .font(.system(size: 24))
                         .foregroundColor(.gray)
                     
-                    VStack(spacing: 0) {
-                        TokenInfoRow(title: "Mint", value: "8v2W...pump")
-                        Divider().background(Color.gray.opacity(0.3))
-                        TokenInfoRow(title: "Market Cap", value: "$18.23K")
-                        Divider().background(Color.gray.opacity(0.3))
-                        TokenInfoRow(title: "Total Supply", value: "999.11M")
-                        Divider().background(Color.gray.opacity(0.3))
-                        TokenInfoRow(title: "Circulating Supply", value: "999.11M")
-                        Divider().background(Color.gray.opacity(0.3))
-                        TokenInfoRow(title: "Holders", value: "13,315")
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
+                    } else if let error = viewModel.errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
+                    } else {
+                        VStack(spacing: 0) {
+                            TokenInfoRow(title: "Address", value: token.address)
+                            Divider().background(Color.gray.opacity(0.3))
+                            TokenInfoRow(
+                                title: "Market Cap",
+                                value: viewModel.formattedMarketCap
+                            )
+                            Divider().background(Color.gray.opacity(0.3))
+                            TokenInfoRow(
+                                title: "Liquidity",
+                                value: viewModel.formattedLiquidity
+                            )
+                            Divider().background(Color.gray.opacity(0.3))
+                            TokenInfoRow(
+                                title: "Volume 24h",
+                                value: viewModel.formattedVolume
+                            )
+                            Divider().background(Color.gray.opacity(0.3))
+                            TokenInfoRow(
+                                title: "Price Change 24h",
+                                value: viewModel.formattedPriceChange
+                            )
+                        }
+                        .padding(16)
+                        .background(AppTheme.colors.cardBackground)
+                        .cornerRadius(12)
                     }
-                    .padding(16)
-                    .background(AppTheme.colors.cardBackground)
-                    .cornerRadius(12)
                 }
                 .padding(.horizontal)
                 
@@ -154,11 +183,27 @@ struct TokenDetailView: View {
                         .foregroundColor(.gray)
                     
                     VStack(spacing: 0) {
-                        TokenPerformanceRow(title: "Volume", value: "$101.19", change: 106.87)
-                        Divider().background(Color.gray.opacity(0.3))
-                        TokenPerformanceRow(title: "Trades", value: "11", change: 10.00)
-                        Divider().background(Color.gray.opacity(0.3))
-                        TokenPerformanceRow(title: "Traders", value: "11", change: 37.50)
+                        TokenPerformanceRow(
+                            title: "Volume",
+                            value: viewModel.volume24h.value,
+                            change: viewModel.volume24h.change
+                        )
+                        if let trades = viewModel.trades24h {
+                            Divider().background(Color.gray.opacity(0.3))
+                            TokenPerformanceRow(
+                                title: "Trades",
+                                value: trades.value,
+                                change: trades.change
+                            )
+                        }
+                        if let traders = viewModel.traders24h {
+                            Divider().background(Color.gray.opacity(0.3))
+                            TokenPerformanceRow(
+                                title: "Traders",
+                                value: traders.value,
+                                change: traders.change
+                            )
+                        }
                     }
                     .padding(16)
                     .background(AppTheme.colors.cardBackground)
@@ -216,6 +261,9 @@ struct TokenDetailView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
+        .onAppear {
+            viewModel.fetchTokenDetails(chainId: "solana", pairId: token.address)
+        }
     }
 }
 
@@ -269,8 +317,10 @@ struct TokenPerformanceRow: View {
                 name: "Solana",
                 price: 95.42,
                 priceChange24h: 2.50,
-                volume24h: 1_000_000, logoURI: nil
-            )
+                volume24h: 1_000_000,
+                logoURI: nil
+            ),
+            viewModel: TokenDetailViewModel(apiService: DexScreenerAPIService())
         )
         .preferredColorScheme(.dark)
     }

@@ -171,7 +171,8 @@ struct SearchView: View {
                             price: price,
                             priceChange24h: priceChange,
                             volume24h: token.daily_volume ?? 0,
-                            logoURI: token.logoURI
+                            logoURI: token.logoURI,
+                            address: token.address
                         )
                         
                         SearchTokenRow(
@@ -199,7 +200,8 @@ struct SearchView: View {
             price: price,
             priceChange24h: priceChange,
             volume24h: token.daily_volume ?? 0,
-            logoURI: token.logoURI
+            logoURI: token.logoURI,
+            address: token.address
         )
         
         if !recentTokens.contains(where: { $0.id == newToken.id }) {
@@ -239,7 +241,8 @@ private struct TrendingTokensContent: View {
                         price: price,
                         priceChange24h: priceChange,
                         volume24h: token.daily_volume ?? 0,
-                        logoURI: token.logoURI
+                        logoURI: token.logoURI,
+                        address: token.address
                     )
                     
                     SearchTokenRow(
@@ -288,7 +291,8 @@ private struct TrendingTokensContent: View {
             price: price,
             priceChange24h: priceChange,
             volume24h: token.daily_volume ?? 0,
-            logoURI: token.logoURI
+            logoURI: token.logoURI,
+            address: token.address
         )
         
         if !recentTokens.contains(where: { $0.id == newToken.id }) {

@@ -54,34 +54,3 @@ struct AlertCard: View {
     }
 }
 
-#Preview {
-    let sampleToken = Token(
-        symbol: "BTC",
-        name: "Bitcoin",
-        price: 50000.00,
-        priceChange24h: 2.5,
-        volume24h: 1_500_000, logoURI: nil
-    )
-    
-    VStack(spacing: 16) {
-        // Price alert preview
-        AlertCard(alert: Alert(
-            token: sampleToken,
-            mode: .price,
-            condition: .over,
-            value: 100000.00
-        ))
-        
-        // Percentage alert preview
-        AlertCard(alert: Alert(
-            token: sampleToken,
-            mode: .percentage,
-            condition: .over,
-            value: 300.0,
-            timeFrame: .day
-        ))
-    }
-    .padding()
-    .background(Color.black)
-    .preferredColorScheme(.dark)
-} 
