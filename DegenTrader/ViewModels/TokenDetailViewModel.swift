@@ -59,26 +59,13 @@ final class TokenDetailViewModel: ObservableObject {
         
         Task {
             do {
-                print("Fetching token details for chainId: \(chainId), pairId: \(pairId)")
                 let details = try await apiService.fetchTokenDetails(chainId: chainId, pairId: pairId)
-                
-                // Debug logging
-                if let details = details {
-                    print("✅ Received token details:")
-                    print("Market Cap: \(details.marketCap ?? 0)")
-                    print("Liquidity USD: \(details.liquidity.usd)")
-                    print("Volume 24h: \(details.volume?.h24 ?? 0)")
-                    print("Price Change 24h: \(details.priceChange.h24)")
-                } else {
-                    print("❌ No details received from API")
-                }
                 
                 DispatchQueue.main.async {
                     self.tokenDetails = details
                     self.isLoading = false
                 }
             } catch {
-                print("❌ Error fetching token details: \(error)")
                 DispatchQueue.main.async {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
