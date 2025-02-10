@@ -3,10 +3,21 @@ import Foundation
 // MARK: - DexScreener Models
 struct DexScreenerResponse: Codable {
     let schemaVersion: String
-    let pairs: [PairData]
+    let pairs: [PairData]?
+    
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case pairs
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decodeIfPresent(String.self, forKey: .schemaVersion) ?? "1.0.0"
+        pairs = try container.decodeIfPresent([PairData].self, forKey: .pairs)
+    }
 }
 
-struct PairData: Codable {
+struct PairData: Codable, Sendable, Equatable {
     let chainId: String
     let dexId: String
     let url: String
@@ -21,19 +32,19 @@ struct PairData: Codable {
     let fdv: Double?
     let marketCap: Double?
     
-    struct BaseToken: Codable {
+    struct BaseToken: Codable, Sendable, Equatable {
         let address: String
         let name: String
         let symbol: String
     }
     
-    struct Liquidity: Codable {
+    struct Liquidity: Codable, Sendable, Equatable {
         let usd: Double
         let base: Double
         let quote: Double
     }
     
-    struct Volume: Codable {
+    struct Volume: Codable, Sendable, Equatable {
         let h24: Double?
         
         enum CodingKeys: String, CodingKey {
@@ -41,7 +52,7 @@ struct PairData: Codable {
         }
     }
     
-    struct PriceChange: Codable {
+    struct PriceChange: Codable, Sendable, Equatable {
         let h24: Double
         
         enum CodingKeys: String, CodingKey {

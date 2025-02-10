@@ -10,7 +10,13 @@ class WalletManager: ObservableObject {
     private let balanceKey = "wallet_balance"
     private let transactionsKey = "wallet_transactions"
     
-    private init() {
+    private var connection: Bool = false // In real app, this would be actual wallet connection
+    
+    var isConnected: Bool {
+        return connection
+    }
+    
+    init() {
         loadData()
         if balances.isEmpty {
             // Initialize with only SOL balance
@@ -79,48 +85,73 @@ class WalletManager: ObservableObject {
         return true
     }
     
-    func swap(fromToken: Token, toToken: Token, fromAmount: Double, toAmount: Double) -> Bool {
-        guard let fromBalance = balances[fromToken.symbol],
+    private func updateBalances(fromSymbol: String, toSymbol: String, fromAmount: Double, toAmount: Double) async throws {
+        guard let fromBalance = balances[fromSymbol],
               fromBalance >= abs(fromAmount) else {
-            // Add failed transaction
-            addTransaction(Transaction(
-                date: Date(),
-                fromToken: fromToken,
-                toToken: toToken,
-                fromAmount: fromAmount,
-                toAmount: toAmount,
-                status: .failed,
-                source: "Phantom"
-            ))
-            return false
+            throw SwapError.insufficientBalance
         }
         
         // Update balances
-        balances[fromToken.symbol] = fromBalance - abs(fromAmount)
-        balances[toToken.symbol] = (balances[toToken.symbol] ?? 0.0) + abs(toAmount)
-        
-        // Add successful transaction
-        addTransaction(Transaction(
-            date: Date(),
-            fromToken: fromToken,
-            toToken: toToken,
-            fromAmount: fromAmount,
-            toAmount: toAmount,
-            status: .succeeded,
-            source: "Phantom"
-        ))
+        balances[fromSymbol] = fromBalance - abs(fromAmount)
+        balances[toSymbol] = (balances[toSymbol] ?? 0.0) + abs(toAmount)
         
         saveData()
-        return true
+        objectWillChange.send()
     }
     
-    func resetBalance() {
-        balances = [
-            "SOL": 1.5,
-            "USDC": 100.0,
-            "BONK": 1_000_000.0
-        ]
-        transactions = []
-        saveData()
+    func connect() {
+        // In real app, this would handle wallet connection
+        connection = true
+    }
+    
+    func disconnect() {
+        connection = false
+    }
+    
+    // MARK: - Swap Operations
+    
+    func swapSolForToken(tokenAddress: String, amount: Double) async throws {
+        // In real implementation, this would:
+        // 1. Get the best route from Jupiter aggregator
+        // 2. Create the swap transaction
+        // 3. Sign the transaction with connected wallet
+        // 4. Send the transaction
+        // 5. Wait for confirmation
+        
+        // For now, simulate network delay and update balances
+        try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+        try await updateBalances(fromSymbol: "SOL", 
+                               toSymbol: tokenAddress, 
+                               fromAmount: amount,
+                               toAmount: amount) // In real app, this would be the actual received amount
+    }
+    
+    func swapTokenForSol(tokenAddress: String, amount: Double) async throws {
+        // Similar to swapSolForToken but in reverse
+        try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+        try await updateBalances(fromSymbol: tokenAddress,
+                               toSymbol: "SOL",
+                               fromAmount: amount,
+                               toAmount: amount)
+    }
+    
+    func swapTokenForToken(fromTokenAddress: String, toTokenAddress: String, amount: Double) async throws {
+        // Similar to above but between two tokens
+        try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+        try await updateBalances(fromSymbol: fromTokenAddress,
+                               toSymbol: toTokenAddress,
+                               fromAmount: amount,
+                               toAmount: amount)
+    }
+    
+    enum SwapError: Error {
+        case insufficientBalance
+        
+        var localizedDescription: String {
+            switch self {
+            case .insufficientBalance:
+                return "Insufficient balance for swap"
+            }
+        }
     }
 } 

@@ -152,3 +152,52 @@ We are working on integrating the meme coin detection into the SearchView. The i
    - Add retry mechanism for failed API calls
    - Implement offline mode support
    - Add error states for network issues
+
+## DexScreener API Integration
+
+### Implementation Status
+1. **Token Price Fetching**:
+   - ✅ Successfully integrated DexScreener API for live token prices
+   - ✅ Implemented token price updates in search view
+   - ✅ Added proper error handling for API responses
+
+2. **Token Details Integration**:
+   - ✅ Implemented two-step process for fetching token details:
+     - First fetch token pairs using token address
+     - Then fetch specific pair details using pair address
+   - ✅ Added proper error handling and null response handling
+   - ✅ Improved logging for debugging API responses
+
+3. **Data Models**:
+   - ✅ Created comprehensive models for DexScreener responses:
+     - `DexScreenerResponse`
+     - `PairData` with nested models for tokens and metrics
+   - ✅ Added proper optional handling for nullable fields
+   - ✅ Implemented computed properties for formatted values
+
+### API Endpoints in Use
+- Token Prices: `/latest/dex/tokens/{tokenAddresses}`
+  - Returns token pairs with price data
+  - Supports multiple token addresses
+  - Rate limit: 300 requests per minute
+
+- Pair Details: `/latest/dex/pairs/{chainId}/{pairId}`
+  - Returns detailed information for specific trading pairs
+  - Uses Solana chain ID
+  - Rate limit: 300 requests per minute
+
+### Next Steps
+1. **Performance Optimization**:
+   - Implement caching for frequently accessed token data
+   - Add rate limiting to prevent API quota exhaustion
+   - Optimize network requests by batching token queries
+
+2. **Error Handling**:
+   - Add retry mechanism for failed API calls
+   - Implement fallback data sources
+   - Add user feedback for API errors
+
+3. **UI Improvements**:
+   - Add loading states for data fetching
+   - Implement pull-to-refresh functionality
+   - Add error states with retry options

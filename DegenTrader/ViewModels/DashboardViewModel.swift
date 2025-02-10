@@ -4,7 +4,7 @@ import SwiftUI
 class DashboardViewModel: ObservableObject {
     @Published private(set) var portfolio: Portfolio
     @Published private(set) var trendingTokens: [Token]
-    private let walletManager = WalletManager.shared
+    private let walletManager: WalletManager
     
     private let solToken = Token(
         symbol: "SOL",
@@ -16,8 +16,8 @@ class DashboardViewModel: ObservableObject {
         address: "So11111111111111111111111111111111111111112"
     )
     
-    init() {
-        // Initialize with empty portfolio
+    init(walletManager: WalletManager) {
+        self.walletManager = walletManager
         self.portfolio = Portfolio(totalBalance: 0, tokens: [], profitLoss: 0, profitLossPercentage: 0)
         self.trendingTokens = []
         

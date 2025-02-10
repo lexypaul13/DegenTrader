@@ -2,13 +2,19 @@ import SwiftUI
 import Alamofire
 
 struct DashboardView: View {
-    @StateObject private var viewModel = DashboardViewModel()
-    @StateObject private var walletManager = WalletManager.shared
+    @StateObject private var viewModel: DashboardViewModel
+    @StateObject private var walletManager: WalletManager
     @State private var showSearch = false
     @State private var showBalance = false
-    @State private var showBuyView =  false
+    @State private var showBuyView = false
     @State private var showSwapView = false
     @State private var selectedSwapToken: Token?
+    
+    init() {
+        let walletManager = WalletManager()
+        self._walletManager = StateObject(wrappedValue: walletManager)
+        self._viewModel = StateObject(wrappedValue: DashboardViewModel(walletManager: walletManager))
+    }
     
     var body: some View {
         NavigationView {
@@ -82,6 +88,7 @@ struct DashboardView: View {
         }
         .fullScreenCover(isPresented: $showSearch) {
             SearchView()
+                .environmentObject(walletManager)
         }
         .onChange(of: walletManager.balances) { _ in
             viewModel.updatePortfolio()
@@ -124,12 +131,11 @@ struct DashboardView: View {
             
             ForEach(viewModel.portfolio.tokens) { token in
                 NavigationLink {
-                    TokenDetailView(token: token.token)
+                    TokenDetailContainerView(token: token.token, walletManager: walletManager)
                 } label: {
                     TokenListRow(token: token)
                         .padding(.leading)
                         .padding(.trailing)
-
                 }
             }
         }

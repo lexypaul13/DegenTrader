@@ -42,20 +42,3 @@ extension JupiterAPIService: JupiterAPIServiceProtocol {
     }
 }
 
-// MARK: - Errors
-enum NetworkError: LocalizedError {
-    case requestFailed(Error)
-    case invalidResponse
-    case invalidData
-    
-    var errorDescription: String? {
-        switch self {
-        case .requestFailed(let error):
-            return "Request failed: \(error.localizedDescription)"
-        case .invalidResponse:
-            return "Invalid response from server"
-        case .invalidData:
-            return "Invalid data received"
-        }
-    }
-} 

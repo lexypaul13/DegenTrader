@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SearchView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var walletManager: WalletManager
     @StateObject private var searchViewModel: SearchViewModel
     @StateObject private var trendingViewModel = TrendingTokensViewModel()
     @State private var showSwapView = false
@@ -178,7 +179,16 @@ struct SearchView: View {
                         SearchTokenRow(
                             token: newToken,
                             onSwapTap: {
-                                selectedToken = newToken
+                                // Set the selected token as the "to" token and use SOL as "from" token
+                                selectedToken = Token(
+                                    symbol: "SOL",
+                                    name: "Solana",
+                                    price: 0.0,
+                                    priceChange24h: 0.0,
+                                    volume24h: 0,
+                                    logoURI: nil,
+                                    address: "So11111111111111111111111111111111111111112"
+                                )
                                 showSwapView = true
                             },
                             onRowTap: {

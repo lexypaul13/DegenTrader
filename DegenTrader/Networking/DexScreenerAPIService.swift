@@ -103,9 +103,11 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
         
         // Check cache first
         if let cached: PairData = cache.get(forKey: cacheKey) {
+            print("🎯 [Cache Hit] Found cached details for \(pairId)")
             return cached
         }
         
+        print("🔍 [API] Fetching token pairs for \(pairId)")
         // First get the pair address using the token address
         let tokenEndpoint = "/latest/dex/tokens/\(pairId)"
         
@@ -115,13 +117,17 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
             parameters: nil
         )
         
+        print("📦 [API] Token pairs response: \(tokenResponse.pairs?.count ?? 0) pairs found")
+        
         // Find the pair for the token on the specified chain
         guard let pair = tokenResponse.pairs?.first(where: { $0.chainId.lowercased() == chainId.lowercased() }) else {
+            print("⚠️ [API] No pairs found for chain \(chainId)")
             return nil
         }
         
         // Now fetch the specific pair details using the pair address
         let pairEndpoint = "/latest/dex/pairs/\(chainId)/\(pair.pairAddress)"
+        print("🔍 [API] Fetching pair details for address: \(pair.pairAddress)")
         
         let pairResponse: DexScreenerResponse = try await performRequestWithRetry(
             pairEndpoint,
@@ -131,9 +137,15 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
         
         let details = pairResponse.pairs?.first
         
-        // Cache the result if we got one
         if let details = details {
-            cache.set(details, forKey: cacheKey)
+            print("✅ [API] Successfully fetched pair details")
+            print("   - Market Cap: \(details.marketCap ?? 0)")
+            print("   - Liquidity: \(details.liquidity.usd)")
+            print("   - Volume 24h: \(details.volume?.h24 ?? 0)")
+            // Cache the result with a shorter TTL (30 seconds)
+            cache.set(details, forKey: cacheKey, expirationIn: 30)
+        } else {
+            print("⚠️ [API] No pair details found in response")
         }
         
         return details
