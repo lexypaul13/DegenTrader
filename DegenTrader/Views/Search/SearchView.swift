@@ -60,7 +60,18 @@ struct SearchView: View {
             .background(AppTheme.colors.background)
             .navigationDestination(isPresented: $showSwapView) {
                 if let token = selectedToken {
-                    SwapView(selectedFromToken: token)
+                    SwapView(
+                        selectedFromToken: Token(
+                            symbol: "SOL",
+                            name: "Solana",
+                            price: 0.0,
+                            priceChange24h: 0.0,
+                            volume24h: 0,
+                            logoURI: nil,
+                            address: "So11111111111111111111111111111111111111112"
+                        ),
+                        selectedToToken: token
+                    )
                 }
             }
             .navigationDestination(isPresented: $showTokenDetail) {
@@ -179,16 +190,7 @@ struct SearchView: View {
                         SearchTokenRow(
                             token: newToken,
                             onSwapTap: {
-                                // Set the selected token as the "to" token and use SOL as "from" token
-                                selectedToken = Token(
-                                    symbol: "SOL",
-                                    name: "Solana",
-                                    price: 0.0,
-                                    priceChange24h: 0.0,
-                                    volume24h: 0,
-                                    logoURI: nil,
-                                    address: "So11111111111111111111111111111111111111112"
-                                )
+                                selectedToken = newToken
                                 showSwapView = true
                             },
                             onRowTap: {

@@ -25,7 +25,7 @@ struct PairData: Codable, Sendable, Equatable {
     let baseToken: BaseToken
     let quoteToken: BaseToken
     let priceNative: String
-    let priceUsd: String
+    let priceUsd: String?
     let liquidity: Liquidity
     let volume: Volume?
     let priceChange: PriceChange
@@ -66,6 +66,6 @@ struct PairData: Codable, Sendable, Equatable {
     }
     
     var usdPrice: Double {
-        Double(priceUsd) ?? 0.0
+        Double(priceUsd ?? "0.0") ?? 0.0
     }
 }

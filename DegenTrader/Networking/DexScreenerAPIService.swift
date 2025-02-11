@@ -90,7 +90,7 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
         var prices: [String: TokenPrice] = [:]
         for pair in response.pairs ?? [] {
             prices[pair.baseToken.address] = TokenPrice(
-                price: Double(pair.priceUsd) ?? 0.0,
+                price: pair.usdPrice,
                 priceChange24h: pair.priceChange.h24
             )
         }
