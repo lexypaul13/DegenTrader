@@ -21,7 +21,7 @@ struct MarketView: View {
             .scrollDismissesKeyboard(.immediately)
             .background(AppTheme.colors.background)
             .navigationDestination(for: Token.self) { token in
-                SwapView(selectedFromToken: token)
+                TokenDetailContainerView(token: token, walletManager: WalletManager.shared)
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {

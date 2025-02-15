@@ -76,7 +76,7 @@ struct SearchView: View {
             }
             .navigationDestination(isPresented: $showTokenDetail) {
                 if let token = selectedToken {
-                    TokenDetailView(token: token)
+                    TokenDetailContainerView(token: token, walletManager: walletManager)
                 }
             }
             .task {

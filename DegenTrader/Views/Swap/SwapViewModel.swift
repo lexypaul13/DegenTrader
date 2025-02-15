@@ -196,7 +196,6 @@ class SwapViewModel: ObservableObject {
                 
                 // Update token objects with new prices
                 if let solPrice = prices[SOL_ADDRESS] {
-                    // Update SOL price in WalletManager
                     if selectedFromToken.symbol == "SOL" {
                         self.selectedFromToken = Token(
                             symbol: "SOL",
