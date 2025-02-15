@@ -9,12 +9,13 @@ class SwapViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var fromAmount: String = ""
     @Published var toAmount: String = ""
-    @Published var selectedFromToken: Token
-    @Published var selectedToToken: Token
+    @Published var selectedFromToken = Token(symbol: "SOL", name: "Solana", price: 0.0, priceChange24h: 0.0, volume24h: 0, logoURI: nil, address: "So11111111111111111111111111111111111111112")
+    @Published var selectedToToken = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil, address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
     @Published var errorMessage: String? = nil
     @Published var showError = false
     @Published var isLoading = false
     @Published private(set) var tokenPrices: [String: TokenPrice] = [:]
+    @Published private(set) var solPrice: Double = 0.0
     
     // MARK: - Swap State
     @Published var swapInProgress = false
@@ -31,67 +32,21 @@ class SwapViewModel: ObservableObject {
     private var isCancelled = false
     private let taskLock = NSLock()
     
-    // MARK: - Computed Properties
-    var solPrice: Double {
-        walletManager.solPrice
-    }
-    
-    var fromTokenBalance: Double {
-        walletManager.getBalance(for: selectedFromToken.symbol)
-    }
-    
-    var toTokenBalance: Double {
-        walletManager.getBalance(for: selectedToToken.symbol)
-    }
-    
-    var fromTokenUSDValue: String {
-        let usdValue = walletManager.getUSDValue(for: selectedFromToken.symbol)
-        return String(format: "$%.2f", usdValue)
-    }
-    
-    var toTokenUSDValue: String {
-        let usdValue = walletManager.getUSDValue(for: selectedToToken.symbol)
-        return String(format: "$%.2f", usdValue)
-    }
-    
     // MARK: - Initialization
     init(priceService: DexScreenerAPIServiceProtocol = DexScreenerAPIService(),
          priceUpdateInterval: TimeInterval = 30,
          autoUpdate: Bool = true,
-         walletManager: WalletManager = .shared) {
+         walletManager: WalletManager) {
         self.priceService = priceService
         self.priceUpdateInterval = priceUpdateInterval
         self.walletManager = walletManager
         
-        // Initialize with SOL as default "from" token
-        self.selectedFromToken = Token(
-            symbol: "SOL",
-            name: "Solana",
-            price: walletManager.solPrice,
-            priceChange24h: 0.0,
-            volume24h: 0,
-            logoURI: nil,
-            address: SOL_ADDRESS
-        )
-        
-        // Initialize with USDC as default "to" token
-        self.selectedToToken = Token(
-            symbol: "USDC",
-            name: "USD Coin",
-            price: 1.00,
-            priceChange24h: 0.01,
-            volume24h: 750_000,
-            logoURI: nil,
-            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-        )
-        
-        if autoUpdate {
-            setupPriceUpdates()
-        }
-        
-        // Initial price update
+        // Fetch initial SOL price
         Task {
-            await updatePrices()
+            await updateSolPrice()
+            if autoUpdate {
+                setupPriceUpdates()
+            }
         }
     }
     
@@ -161,6 +116,7 @@ class SwapViewModel: ObservableObject {
             let prices = try await priceService.fetchTokenPrices(addresses: [SOL_ADDRESS])
             if let solTokenPrice = prices[SOL_ADDRESS] {
                 await MainActor.run {
+                    self.solPrice = solTokenPrice.price
                     self.selectedFromToken = Token(
                         symbol: "SOL",
                         name: "Solana",
@@ -177,9 +133,24 @@ class SwapViewModel: ObservableObject {
         }
     }
     
-    private func updatePrices() async {
+    func updatePrices() async {
+        guard !Task.isCancelled && !isCancelled else { 
+            print("DEBUG: Update prices cancelled")
+            return 
+        }
+        
         do {
-            // Get addresses to fetch prices for
+            // Basic rate limiting check
+            if let lastUpdate = lastPriceUpdateTime,
+               Date().timeIntervalSince(lastUpdate) < priceUpdateInterval {
+                print("DEBUG: Update prices skipped due to rate limiting")
+                return
+            }
+            
+            // Set last update time before making the request
+            lastPriceUpdateTime = Date()
+            
+            // Always include SOL in the price update
             var addresses = [SOL_ADDRESS]
             if selectedFromToken.address != SOL_ADDRESS {
                 addresses.append(selectedFromToken.address)
@@ -188,60 +159,47 @@ class SwapViewModel: ObservableObject {
                 addresses.append(selectedToToken.address)
             }
             
-            let prices = try await priceService.fetchTokenPrices(addresses: addresses)
+            print("DEBUG: Fetching prices for addresses: \(addresses)")
             
-            await MainActor.run {
-                // Update token prices dictionary
-                self.tokenPrices = prices
+            guard !Task.isCancelled && !isCancelled else {
+                print("DEBUG: Update cancelled before network call")
+                return
+            }
+            
+            print("DEBUG: Fetching fresh prices from service")
+            tokenPrices = try await priceService.fetchTokenPrices(addresses: addresses)
+            
+            // Update token prices
+            await MainActor.run { [weak self] in
+                guard let self = self, !Task.isCancelled && !self.isCancelled else { return }
                 
-                // Update token objects with new prices
-                if let solPrice = prices[SOL_ADDRESS] {
-                    if selectedFromToken.symbol == "SOL" {
-                        self.selectedFromToken = Token(
-                            symbol: "SOL",
-                            name: "Solana",
-                            price: solPrice.price,
-                            priceChange24h: solPrice.priceChange24h,
-                            volume24h: self.selectedFromToken.volume24h,
-                            logoURI: self.selectedFromToken.logoURI,
-                            address: SOL_ADDRESS
-                        )
-                    }
-                    if selectedToToken.symbol == "SOL" {
-                        self.selectedToToken = Token(
-                            symbol: "SOL",
-                            name: "Solana",
-                            price: solPrice.price,
-                            priceChange24h: solPrice.priceChange24h,
-                            volume24h: self.selectedToToken.volume24h,
-                            logoURI: self.selectedToToken.logoURI,
-                            address: SOL_ADDRESS
-                        )
-                    }
+                // Update SOL price first
+                if let solPrice = self.tokenPrices[SOL_ADDRESS] {
+                    self.solPrice = solPrice.price
                 }
                 
-                // Update other token prices if needed
-                if let fromPrice = prices[selectedFromToken.address] {
+                // Update selected tokens relative to SOL
+                if let fromPrice = self.tokenPrices[self.selectedFromToken.address] {
                     self.selectedFromToken = Token(
-                        symbol: selectedFromToken.symbol,
-                        name: selectedFromToken.name,
+                        symbol: self.selectedFromToken.symbol,
+                        name: self.selectedFromToken.name,
                         price: fromPrice.price,
                         priceChange24h: fromPrice.priceChange24h,
-                        volume24h: selectedFromToken.volume24h,
-                        logoURI: selectedFromToken.logoURI,
-                        address: selectedFromToken.address
+                        volume24h: self.selectedFromToken.volume24h,
+                        logoURI: self.selectedFromToken.logoURI,
+                        address: self.selectedFromToken.address
                     )
                 }
                 
-                if let toPrice = prices[selectedToToken.address] {
+                if let toPrice = self.tokenPrices[self.selectedToToken.address] {
                     self.selectedToToken = Token(
-                        symbol: selectedToToken.symbol,
-                        name: selectedToToken.name,
+                        symbol: self.selectedToToken.symbol,
+                        name: self.selectedToToken.name,
                         price: toPrice.price,
                         priceChange24h: toPrice.priceChange24h,
-                        volume24h: selectedToToken.volume24h,
-                        logoURI: selectedToToken.logoURI,
-                        address: selectedToToken.address
+                        volume24h: self.selectedToToken.volume24h,
+                        logoURI: self.selectedToToken.logoURI,
+                        address: self.selectedToToken.address
                     )
                 }
                 
@@ -256,13 +214,14 @@ class SwapViewModel: ObservableObject {
     }
     
     var hasInsufficientFunds: Bool {
-        guard let amount = Double(fromAmount) else { return false }
-        return !walletManager.validateSwap(fromSymbol: selectedFromToken.symbol, amount: amount)
+        guard let amount = Double(fromAmount),
+              let balance = walletBalances[selectedFromToken.symbol]
+        else { return false }
+        return amount > balance
     }
     
     var isValidSwap: Bool {
-        // First check if user has any SOL balance
-        guard walletManager.hasSolBalance else { return false }
+        guard isWalletConnected else { return false }
         guard let amount = Double(fromAmount) else { return false }
         return amount >= minimumAmount && 
                amount <= maximumAmount && 
@@ -276,13 +235,6 @@ class SwapViewModel: ObservableObject {
         guard !amount.isEmpty else {
             errorMessage = nil
             showError = false
-            return
-        }
-        
-        // Check if user has any SOL first
-        guard walletManager.hasSolBalance else {
-            errorMessage = "You need to buy SOL first"
-            showError = true
             return
         }
         
@@ -318,39 +270,30 @@ class SwapViewModel: ObservableObject {
     }
     
     private func calculateToAmount(from value: Double) {
-        // Get the latest prices from the wallet manager for SOL or token objects for others
-        let fromTokenPrice = selectedFromToken.symbol == "SOL" ? walletManager.solPrice : selectedFromToken.price
-        let toTokenPrice = selectedToToken.symbol == "SOL" ? walletManager.solPrice : selectedToToken.price
-        
-        guard fromTokenPrice > 0, toTokenPrice > 0 else {
-            toAmount = "0"
-            return
-        }
-        
+        // Use latest prices from cache or token objects
+        let fromTokenPrice = selectedFromToken.price
+        let toTokenPrice = selectedToToken.price
         let convertedAmount = value * (fromTokenPrice / toTokenPrice)
         toAmount = String(format: "%.8f", convertedAmount)
     }
     
-    func handleContinue() async {
+    func handleContinue() -> Bool {
         guard isValidSwap else {
             showError = true
-            return
+            return false
         }
         
         isLoading = true
-        
-        do {
-            try await executeSwap()
-            isLoading = false
-        } catch {
-            isLoading = false
-            errorMessage = error.localizedDescription
-            showError = true
+        // In a real app, perform the swap transaction here
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.isLoading = false
+            // Handle success/failure
         }
+        return true
     }
     
-    func getBalance(for token: Token) -> Double {
-        return walletManager.getBalance(for: token.symbol)
+    func getBalance(for token: Token) -> Double? {
+        walletBalances[token.symbol]
     }
     
     private func isTokenTradingEnabled(_ token: Token) -> Bool {
@@ -403,6 +346,7 @@ class SwapViewModel: ObservableObject {
         swapError = nil
         
         do {
+            // Convert amount to proper decimal places
             guard let amount = Double(fromAmount) else {
                 throw SwapError.invalidAmount
             }
@@ -431,17 +375,6 @@ class SwapViewModel: ObservableObject {
             }
             
             swapSuccess = true
-            // Add transaction record
-            walletManager.addTransaction(Transaction(
-                date: Date(),
-                fromToken: selectedFromToken,
-                toToken: selectedToToken,
-                fromAmount: amount,
-                toAmount: Double(toAmount) ?? 0,
-                status: .succeeded,
-                source: "Swap"
-            ))
-            
             // Trigger price updates after successful swap
             await updatePrices()
             
@@ -478,4 +411,11 @@ class SwapViewModel: ObservableObject {
     var isWalletConnected: Bool {
         return walletManager.isConnected
     }
+    
+    // MARK: - Mock wallet balances
+    let walletBalances: [String: Double] = [
+        "OMNI": 50.0,
+        "USDC": 1000.0,
+        "ETH": 10.0
+    ]
 } 

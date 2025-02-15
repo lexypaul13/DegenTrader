@@ -8,6 +8,7 @@ struct SearchView: View {
     @State private var showSwapView = false
     @State private var showTokenDetail = false
     @State private var selectedToken: Token?
+    @State private var targetToken: Token?
     @State public var recentTokens: [Token] = []
     
     init() {
@@ -59,19 +60,8 @@ struct SearchView: View {
             }
             .background(AppTheme.colors.background)
             .navigationDestination(isPresented: $showSwapView) {
-                if let token = selectedToken {
-                    SwapView(
-                        selectedFromToken: Token(
-                            symbol: "SOL",
-                            name: "Solana",
-                            price: 0.0,
-                            priceChange24h: 0.0,
-                            volume24h: 0,
-                            logoURI: nil,
-                            address: "So11111111111111111111111111111111111111112"
-                        ),
-                        selectedToToken: token
-                    )
+                if let fromToken = selectedToken, let toToken = targetToken {
+                    SwapView(selectedFromToken: fromToken, selectedToToken: toToken)
                 }
             }
             .navigationDestination(isPresented: $showTokenDetail) {
@@ -138,6 +128,7 @@ struct SearchView: View {
                     viewModel: trendingViewModel,
                     recentTokens: $recentTokens,
                     selectedToken: $selectedToken,
+                    targetToken: $targetToken,
                     showSwapView: $showSwapView,
                     showTokenDetail: $showTokenDetail
                 )
@@ -190,7 +181,17 @@ struct SearchView: View {
                         SearchTokenRow(
                             token: newToken,
                             onSwapTap: {
-                                selectedToken = newToken
+                                let solToken = Token(
+                                    symbol: "SOL",
+                                    name: "Solana",
+                                    price: walletManager.solPrice,
+                                    priceChange24h: 0.0,
+                                    volume24h: 0,
+                                    logoURI: nil,
+                                    address: "So11111111111111111111111111111111111111112"
+                                )
+                                selectedToken = solToken
+                                targetToken = newToken
                                 showSwapView = true
                             },
                             onRowTap: {
@@ -230,8 +231,10 @@ struct SearchView: View {
 // MARK: - Trending Tokens Content
 private struct TrendingTokensContent: View {
     @ObservedObject var viewModel: TrendingTokensViewModel
+    @EnvironmentObject private var walletManager: WalletManager
     @Binding var recentTokens: [Token]
     @Binding var selectedToken: Token?
+    @Binding var targetToken: Token?
     @Binding var showSwapView: Bool
     @Binding var showTokenDetail: Bool
     
@@ -260,7 +263,17 @@ private struct TrendingTokensContent: View {
                     SearchTokenRow(
                         token: newToken,
                         onSwapTap: {
-                            selectedToken = newToken
+                            let solToken = Token(
+                                symbol: "SOL",
+                                name: "Solana",
+                                price: walletManager.solPrice,
+                                priceChange24h: 0.0,
+                                volume24h: 0,
+                                logoURI: nil,
+                                address: "So11111111111111111111111111111111111111112"
+                            )
+                            selectedToken = solToken
+                            targetToken = newToken
                             showSwapView = true
                         },
                         onRowTap: {

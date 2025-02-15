@@ -19,17 +19,11 @@ struct SwapView: View {
         case from, to
     }
 
-    init(selectedFromToken: Token = Token(
-        symbol: "SOL",
-        name: "Solana",
-        price: 0.0,
-        priceChange24h: 0.0,
-        volume24h: 0,
-        logoURI: nil,
-        address: "So11111111111111111111111111111111111111112"
-    ), selectedToToken: Token? = nil, fromAmount: String = "0.0") {
+    init(selectedFromToken: Token = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil),
+         selectedToToken: Token = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil),
+         fromAmount: String = "0.001231039") {
         _selectedFromToken = State(initialValue: selectedFromToken)
-        _selectedToToken = State(initialValue: selectedToToken ?? selectedFromToken)
+        _selectedToToken = State(initialValue: selectedToToken)
         _fromAmount = State(initialValue: fromAmount)
     }
 
@@ -350,25 +344,9 @@ struct PercentageButtonsView: View {
 
 #Preview {
     NavigationView {
-        SwapView(selectedFromToken: Token(
-            symbol: "SOL",
-            name: "Solana",
-            price: 0.0,
-            priceChange24h: 0.0,
-            volume24h: 0,
-            logoURI: nil,
-            address: "So11111111111111111111111111111111111111112"
-        ),
-                selectedToToken: Token(
-                    symbol: "USDC",
-                    name: "USD Coin",
-                    price: 1.00,
-                    priceChange24h: 0.0,
-                    volume24h: 0,
-                    logoURI: nil,
-                    address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                ),
-                fromAmount: "0.0")
+        SwapView(selectedFromToken: Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil ),
+                selectedToToken: Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil),
+                fromAmount: "0.001231039")
     }
     .preferredColorScheme(.dark)
 }
