@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 class WalletManager: ObservableObject {
     static let shared = WalletManager()
@@ -7,7 +8,9 @@ class WalletManager: ObservableObject {
     @Published private(set) var balances: [String: Double] = [:]
     @Published var transactions: [Transaction] = []
     @Published private(set) var solPrice: Double = 0.0
+    @Published private(set) var previousSolPrice: Double = 0.0
     @Published private(set) var lastPriceUpdate: Date?
+    @Published private(set) var solBalance: SolTokenBalance?
     
     // MARK: - Private Properties
     private let defaults = UserDefaults.standard
@@ -57,8 +60,20 @@ class WalletManager: ObservableObject {
             
             await MainActor.run {
                 if let solTokenPrice = prices["So11111111111111111111111111111111111111112"] {
+                    // Store the previous price before updating
+                    self.previousSolPrice = self.solPrice
                     self.solPrice = solTokenPrice.price
                     self.lastPriceUpdate = Date()
+                    
+                    // Update SOL balance with new prices
+                    let currentBalance = self.balances["SOL"] ?? 0.0
+                    self.solBalance = SolTokenBalance(
+                        amount: currentBalance,
+                        currentPrice: self.solPrice,
+                        previousPrice: self.previousSolPrice
+                    )
+                    
+                    objectWillChange.send()
                 }
             }
         } catch {
@@ -66,29 +81,104 @@ class WalletManager: ObservableObject {
         }
     }
     
-    private func loadData() {
-        // Load balances
-        if let data = defaults.data(forKey: balanceKey),
-           let decoded = try? JSONDecoder().decode([String: Double].self, from: data) {
-            balances = decoded
+    private func saveData() {
+        print("💾 [WalletManager] Saving data...")
+        print("Current balances before save: \(balances)")
+        
+        if balances.isEmpty {
+            print("⚠️ [WalletManager] Warning: Attempting to save empty balances")
         }
         
-        // Load transactions
-        if let data = defaults.data(forKey: transactionsKey),
-           let decoded = try? JSONDecoder().decode([Transaction].self, from: data) {
-            transactions = decoded
+        let saveBlock = { [weak self] in
+            guard let self = self else { return }
+            do {
+                let encodedBalances = try JSONEncoder().encode(self.balances)
+                self.defaults.set(encodedBalances, forKey: self.balanceKey)
+                
+                let encodedTransactions = try JSONEncoder().encode(self.transactions)
+                self.defaults.set(encodedTransactions, forKey: self.transactionsKey)
+                
+                // Force immediate synchronization
+                self.defaults.synchronize()
+                
+                if let savedData = self.defaults.data(forKey: self.balanceKey),
+                   let savedBalances = try? JSONDecoder().decode([String: Double].self, from: savedData) {
+                    print("✅ [WalletManager] Balances saved and verified: \(savedBalances)")
+                } else {
+                    print("⚠️ [WalletManager] Failed to verify saved balances")
+                }
+                
+                print("✅ [WalletManager] Transactions saved")
+                
+                self.objectWillChange.send()
+                print("📢 [WalletManager] Notified observers after save")
+            } catch {
+                print("❌ [WalletManager] Failed to save data: \(error)")
+            }
+        }
+        
+        if Thread.isMainThread {
+            saveBlock()
+        } else {
+            DispatchQueue.main.sync(execute: saveBlock)
         }
     }
     
-    private func saveData() {
-        // Save balances
-        if let encoded = try? JSONEncoder().encode(balances) {
-            defaults.set(encoded, forKey: balanceKey)
+    private func loadData() {
+        print("📂 [WalletManager] Loading data...")
+        
+        let loadBlock = { [weak self] in
+            guard let self = self else { return }
+            
+            // Load and verify balances
+            if let data = self.defaults.data(forKey: self.balanceKey) {
+                do {
+                    let decoded = try JSONDecoder().decode([String: Double].self, from: data)
+                    print("✅ [WalletManager] Successfully decoded balances: \(decoded)")
+                    
+                    self.balances = decoded
+                    
+                    // Update SOL balance object if needed
+                    if let solBalance = decoded["SOL"] {
+                        self.solBalance = SolTokenBalance(
+                            amount: solBalance,
+                            currentPrice: self.solPrice,
+                            previousPrice: self.previousSolPrice
+                        )
+                    }
+                    
+                    print("✅ [WalletManager] Balances updated: \(decoded)")
+                } catch {
+                    print("❌ [WalletManager] Failed to decode balances: \(error)")
+                    self.balances = [:]
+                }
+            } else {
+                print("ℹ️ [WalletManager] No saved balances found, initializing empty")
+                self.balances = [:]
+            }
+            
+            // Load transactions
+            if let data = self.defaults.data(forKey: self.transactionsKey) {
+                do {
+                    let decoded = try JSONDecoder().decode([Transaction].self, from: data)
+                    self.transactions = decoded
+                    print("✅ [WalletManager] Loaded \(decoded.count) transactions")
+                } catch {
+                    print("❌ [WalletManager] Failed to decode transactions: \(error)")
+                    self.transactions = []
+                }
+            } else {
+                print("ℹ️ [WalletManager] No saved transactions found")
+                self.transactions = []
+            }
+            
+            self.objectWillChange.send()
         }
         
-        // Save transactions
-        if let encoded = try? JSONEncoder().encode(transactions) {
-            defaults.set(encoded, forKey: transactionsKey)
+        if Thread.isMainThread {
+            loadBlock()
+        } else {
+            DispatchQueue.main.sync(execute: loadBlock)
         }
     }
     
@@ -203,8 +293,7 @@ class WalletManager: ObservableObject {
     
     // Add helper to get formatted SOL balance
     var formattedSolBalance: String {
-        let balance = balances["SOL"] ?? 0.0
-        return String(format: "%.4f SOL", balance)
+        solBalance?.formattedAmount ?? "0.00000 SOL"
     }
     
     // Add helper to get SOL balance in USD
@@ -212,5 +301,116 @@ class WalletManager: ObservableObject {
         let balance = balances["SOL"] ?? 0.0
         let usdValue = balance * solPrice
         return String(format: "$%.2f", usdValue)
+    }
+    
+    func buySol(usdAmount: Double) async throws {
+        print("🚀 [WalletManager] Starting buySol with USD amount: \(usdAmount)")
+        guard usdAmount > 0 else { 
+            print("❌ [WalletManager] Invalid amount: \(usdAmount)")
+            throw WalletError.invalidAmount 
+        }
+        
+        // First fetch latest SOL price to ensure accuracy
+        do {
+            print("🔍 [WalletManager] Fetching latest SOL price...")
+            let prices = try await dexScreenerService.fetchTokenPrices(
+                addresses: ["So11111111111111111111111111111111111111112"]
+            )
+            
+            guard let solTokenPrice = prices["So11111111111111111111111111111111111111112"] else {
+                print("❌ [WalletManager] Failed to get SOL price")
+                throw WalletError.transactionFailed
+            }
+            
+            await MainActor.run {
+                print("💰 [WalletManager] Updating prices and balance...")
+                print("Previous SOL price: \(self.solPrice)")
+                print("New SOL price: \(solTokenPrice.price)")
+                print("Current balances before update: \(self.balances)")
+                
+                // Update prices first
+                self.previousSolPrice = self.solPrice
+                self.solPrice = solTokenPrice.price
+                self.lastPriceUpdate = Date()
+                
+                // Calculate SOL amount based on current price
+                let solAmount = usdAmount / self.solPrice
+                print("📊 [WalletManager] Calculated SOL amount: \(solAmount)")
+                
+                // Update balance
+                let previousBalance = self.balances["SOL"] ?? 0.0
+                let newBalance = previousBalance + solAmount
+                print("💳 [WalletManager] Updating balance from \(previousBalance) to \(newBalance)")
+                
+                // Instead of updating in-place, create a new dictionary to trigger the publisher update
+                var updatedBalances = self.balances
+                updatedBalances["SOL"] = newBalance
+                self.balances = updatedBalances
+
+                // Explicitly trigger an update
+                self.objectWillChange.send()
+                
+                print("Current balances after update: \(self.balances)")
+                
+                // Add to transactions
+                let transaction = Transaction(
+                    date: Date(),
+                    fromToken: Token(symbol: "USD", name: "US Dollar", price: 1.0, priceChange24h: 0, volume24h: 0, logoURI: nil),
+                    toToken: Token(symbol: "SOL", name: "Solana", price: self.solPrice, priceChange24h: solTokenPrice.priceChange24h, volume24h: 0, logoURI: nil),
+                    fromAmount: usdAmount,
+                    toAmount: solAmount,
+                    status: .succeeded,
+                    source: "Buy"
+                )
+                self.addTransaction(transaction)
+                print("📝 [WalletManager] Added transaction to history")
+                
+                // Update SOL balance with latest price info
+                self.solBalance = SolTokenBalance(
+                    amount: newBalance,
+                    currentPrice: self.solPrice,
+                    previousPrice: self.previousSolPrice
+                )
+                print("✅ [WalletManager] Updated SOL balance object: \(String(describing: self.solBalance))")
+                
+                // Save data and notify of changes
+                self.saveData()
+            }
+        } catch {
+            print("❌ [WalletManager] Transaction failed with error: \(error)")
+            throw WalletError.transactionFailed
+        }
+    }
+    
+    // MARK: - Helper Methods
+    var formattedSolUSDValue: String {
+        solBalance?.formattedUSDValue ?? "$0.00"
+    }
+    
+    var formattedSolPriceChange: String {
+        solBalance?.formattedPriceChange ?? "0.00%"
+    }
+    
+    var solPriceChangeColor: Color {
+        guard let change = solBalance?.priceChangePercentage else { return .gray }
+        return change >= 0 ? .green : .red
+    }
+    
+    // MARK: - Error Handling
+    enum WalletError: Error, LocalizedError {
+        case invalidAmount
+        case insufficientBalance
+        case transactionFailed
+        
+        var errorDescription: String? {
+            switch self {
+            case .invalidAmount:
+                return "Please enter a valid amount"
+            case .insufficientBalance:
+                return "Insufficient balance"
+            case .transactionFailed:
+                return "Transaction failed. Please try again"
+            }
+        }
     }
 } 

@@ -11,7 +11,7 @@ struct DashboardView: View {
     @State private var selectedSwapToken: Token?
     
     init() {
-        let walletManager = WalletManager()
+        let walletManager = WalletManager.shared
         self._walletManager = StateObject(wrappedValue: walletManager)
         self._viewModel = StateObject(wrappedValue: DashboardViewModel(walletManager: walletManager))
     }

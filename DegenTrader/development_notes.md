@@ -11,6 +11,35 @@ DegenTrader is a Solana meme coin trading simulator focusing on providing real-t
 - ✅ Removed sample transactions
 - ✅ Set profit/loss text to grey when value is 0
 - ✅ Cleaned up mock data
+- ✅ Fixed immediate balance updates after buying SOL
+- ✅ Implemented proper state management using WalletManager.shared
+
+### Next Steps for Dashboard
+1. **Live SOL Data Implementation**:
+   - Enhance Portfolio model to include:
+     - Price change in USD
+     - Improved price change percentage tracking
+     - Better formatted display values
+   - Update UI elements to show:
+     - Main balance with live updates
+     - Price changes (USD and percentage)
+     - Token list with detailed SOL information
+   - Implement proper price update tracking
+   - Add formatted computed properties for all displayed values
+
+2. **State Management Improvements**:
+   - ✅ Using consistent WalletManager.shared across views
+   - ✅ Proper balance change observation in DashboardView
+   - ✅ Reliable state updates in WalletManager
+   - Add comprehensive price update tracking
+   - Implement better error handling for price updates
+
+### Recent Changes
+- Fixed balance update issues in Dashboard
+- Implemented proper state sharing between Buy and Dashboard views
+- Added reliable balance persistence
+- Improved state management architecture
+- Enhanced real-time updates for portfolio data
 
 ### Search View
 - ✅ Connected to Jupiter API for trending tokens
