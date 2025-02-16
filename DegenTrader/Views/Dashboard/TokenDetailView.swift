@@ -106,7 +106,7 @@ struct TokenDetailView: View {
                 HStack(spacing: 30) {
                     // Swap Button
                     NavigationLink {
-                        SwapView(selectedFromToken: token, fromAmount: String(format: "%.8f", walletManager.getBalance(for: token.symbol)))
+                        SwapView(selectedFromToken: token)
                     } label: {
                         VStack(spacing: 8) {
                             Capsule()

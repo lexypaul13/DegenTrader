@@ -4,6 +4,7 @@ struct BuyView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var walletManager = WalletManager.shared
     @State private var amount: String = "0"
+    @State private var isProcessing = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @FocusState private var isAmountFocused: Bool
@@ -23,11 +24,7 @@ struct BuyView: View {
             AppTheme.colors.background.ignoresSafeArea()
             
             VStack(spacing: 32) {
-                // Balance Display
-                Text("Balance: \(String(format: "%.4f", walletManager.getBalance(for: token.symbol))) \(token.symbol)")
-                    .font(.system(size: 17))
-                    .foregroundColor(.gray)
-                
+                // Token Info
                 // Amount Display
                 VStack(spacing: 8) {
                     Text("$\(amount == "0" ? "0" : amount)")
@@ -42,8 +39,9 @@ struct BuyView: View {
                 // Quick Amount Buttons
                 HStack(spacing: 16) {
                     ForEach(quickAmounts, id: \.self) { value in
-                        Button(action: {
+                        Button(action: { 
                             amount = "\(value)"
+                            isAmountFocused = true
                         }) {
                             Text("$\(value)")
                                 .font(.system(size: 17, weight: .medium))
@@ -56,26 +54,38 @@ struct BuyView: View {
                     }
                 }
                 .padding(.horizontal, 24)
-            
+                
+                
+                Spacer()
+                
+                // Buy Button
                 Button(action: handleBuy) {
-                    Text("Buy")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(AppTheme.colors.accent)
-                        .cornerRadius(28)
+                    if isProcessing {
+                        ProgressView()
+                            .tint(.black)
+                    } else {
+                        Text("Buy")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.black)
+                    }
                 }
+                .disabled(isProcessing || amount == "0")
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(AppTheme.colors.accent)
+                .cornerRadius(28)
                 .padding(.horizontal, 24)
+                .padding(.bottom, 16)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 32)
-            
-            // Hidden TextField for keyboard input
-            TextField("0", text: $amount)
-                .keyboardType(.decimalPad)
-                .focused($isAmountFocused)
-                .opacity(0)
+        }
+        .alert("Transaction Status", isPresented: $showingAlert) {
+            Button("OK") {
+                if alertMessage.contains("Successfully") {
+                    dismiss()
+                }
+            }
+        } message: {
+            Text(alertMessage)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
@@ -94,52 +104,39 @@ struct BuyView: View {
                 }
             }
         }
-        .alert("Transaction", isPresented: $showingAlert) {
-            Button("OK") { 
-                if alertMessage.contains("Successfully") {
-                    dismiss()
-                }
-            }
-        } message: {
-            Text(alertMessage)
-        }
         .onAppear {
             isAmountFocused = true
         }
     }
     
     private func handleBuy() {
-        guard let dollarAmount = Double(amount) else {
-            alertMessage = "Invalid amount"
+        guard let dollarAmount = Double(amount), dollarAmount >= minAmount else {
+            alertMessage = "Minimum amount is $\(minAmount)"
             showingAlert = true
             return
         }
         
-        let tokenAmount = dollarAmount / token.price
+        isProcessing = true
         
-        // Update the balance first
-        if walletManager.buy(amount: tokenAmount, symbol: token.symbol) {
-            // If buy succeeds, add the transaction
-            walletManager.addTransaction(Transaction(
-                date: Date(),
-                fromToken: Token(symbol: "USD", name: "US Dollar", price: 1.0, priceChange24h: 0, volume24h: 0, logoURI: nil),
-                toToken: token,
-                fromAmount: dollarAmount,
-                toAmount: tokenAmount,
-                status: .succeeded,
-                source: "Buy"
-            ))
-            
-            alertMessage = "Successfully bought \(String(format: "%.4f", tokenAmount)) \(token.symbol)"
-            showingAlert = true
-            amount = "0"
-        } else {
-            alertMessage = "Transaction failed"
-            showingAlert = true
+        Task {
+            do {
+                try await walletManager.buySol(usdAmount: dollarAmount)
+                await MainActor.run {
+                    alertMessage = "Successfully bought \(formattedTokenAmount) \(token.symbol)"
+                    showingAlert = true
+                    amount = "0"
+                    isProcessing = false
+                }
+            } catch {
+                await MainActor.run {
+                    alertMessage = error.localizedDescription
+                    showingAlert = true
+                    isProcessing = false
+                }
+            }
         }
     }
 }
-
 
 #Preview {
     NavigationView {
@@ -148,7 +145,9 @@ struct BuyView: View {
             name: "Solana",
             price: 95.42,
             priceChange24h: 2.5,
-            volume24h: 1_500_000, logoURI: nil
+            volume24h: 1_500_000,
+            logoURI: nil,
+            address: "So11111111111111111111111111111111111111112"
         ))
     }
     .preferredColorScheme(.dark)

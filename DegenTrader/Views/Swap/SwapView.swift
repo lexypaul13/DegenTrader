@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 
 struct SwapView: View {
-    @State private var fromAmount: String
-    @State private var toAmount: String = "0.000001"
+    @State private var fromAmount: String = "0"
+    @State private var toAmount: String = "0"
     @State private var showFromTokenSelect = false
     @State private var showToTokenSelect = false
     @State private var selectedFromToken: Token
@@ -20,11 +20,9 @@ struct SwapView: View {
     }
 
     init(selectedFromToken: Token = Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil),
-         selectedToToken: Token = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil),
-         fromAmount: String = "0.001231039") {
+         selectedToToken: Token = Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil)) {
         _selectedFromToken = State(initialValue: selectedFromToken)
         _selectedToToken = State(initialValue: selectedToToken)
-        _fromAmount = State(initialValue: fromAmount)
     }
 
     private var isModal: Bool {
@@ -82,8 +80,15 @@ struct SwapView: View {
 
             VStack(spacing: 10) {
                 HStack(spacing: 12) {
-                    CustomTextField(text: $fromAmount, field: .from, focusedField: $focusedField)
-                        .frame(maxWidth: .infinity, maxHeight: 40)
+                    CustomTextField(
+                        text: $fromAmount,
+                        field: .from,
+                        focusedField: $focusedField,
+                        token: selectedFromToken,
+                        walletManager: walletManager,
+                        showPercentageButtons: true
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: 40)
                     
                     Button(action: { showFromTokenSelect = true }) {
                         TokenButton(token: selectedFromToken, action: { showFromTokenSelect = true })
@@ -118,8 +123,15 @@ struct SwapView: View {
 
             VStack(spacing: 10) {
                 HStack(spacing: 12) {
-                    CustomTextField(text: $toAmount, field: .to, focusedField: $focusedField)
-                        .frame(maxWidth: .infinity, maxHeight: 40)
+                    CustomTextField(
+                        text: $toAmount,
+                        field: .to,
+                        focusedField: $focusedField,
+                        token: selectedToToken,
+                        walletManager: walletManager,
+                        showPercentageButtons: false
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: 40)
                     
                     Button(action: { showToTokenSelect = true }) {
                         TokenButton(token: selectedToToken, action: { showToTokenSelect = true })
@@ -193,9 +205,18 @@ struct SwapView: View {
         selectedFromToken = selectedToToken
         selectedToToken = temp
 
-        let tempAmount = fromAmount
-        fromAmount = toAmount
-        toAmount = tempAmount
+        // Only update amounts if they're not "0"
+        if fromAmount != "0" && toAmount != "0" {
+            if let fromValue = Double(fromAmount), let toValue = Double(toAmount) {
+                // Calculate the equivalent amount in the new token
+                let fromBalance = walletManager.getBalance(for: selectedFromToken.symbol)
+                let toBalance = walletManager.getBalance(for: selectedToToken.symbol)
+                
+                // Ensure we don't exceed available balance
+                fromAmount = String(format: "%.8f", min(toValue, fromBalance))
+                toAmount = String(format: "%.8f", min(fromValue, toBalance))
+            }
+        }
     }
     
     private func handlePercentage(_ percentage: Double) {
@@ -213,6 +234,9 @@ struct CustomTextField: UIViewRepresentable {
     @Binding var text: String
     let field: SwapView.Field
     let focusedField: FocusState<SwapView.Field?>.Binding
+    let token: Token
+    let walletManager: WalletManager
+    let showPercentageButtons: Bool
     
     func makeUIView(context: Context) -> UITextField {
         let textField = UITextField()
@@ -223,6 +247,7 @@ struct CustomTextField: UIViewRepresentable {
         textField.textColor = .white
         textField.textAlignment = .left
         textField.backgroundColor = .clear
+        textField.alpha = 0.7  // Add opacity to the text field
         
         // Configure text field
         textField.adjustsFontSizeToFitWidth = true
@@ -232,19 +257,25 @@ struct CustomTextField: UIViewRepresentable {
         textField.autocapitalizationType = .none
         textField.spellCheckingType = .no
         
-        let percentageView = UIHostingController(rootView:
-            PercentageButtonsView(handlePercentage: { percentage in
-                let maxAmount = 100.0 // Example max amount
-                text = String(format: "%.8f", maxAmount * percentage)
-            }, onDone: {
-                textField.resignFirstResponder()
-            })
-        )
-        percentageView.view.backgroundColor = .clear
-        textField.inputAccessoryView = percentageView.view
-        
-        let size = CGSize(width: UIScreen.main.bounds.width, height: 50)
-        percentageView.view.frame = CGRect(origin: .zero, size: size)
+        if showPercentageButtons {
+            let percentageView = UIHostingController(rootView:
+                PercentageButtonsView(handlePercentage: { percentage in
+                    let balance = walletManager.getBalance(for: token.symbol)
+                    if balance > 0 {
+                        text = String(format: "%.8f", balance * percentage)
+                    } else {
+                        text = "0"
+                    }
+                }, onDone: {
+                    textField.resignFirstResponder()
+                })
+            )
+            percentageView.view.backgroundColor = .clear
+            textField.inputAccessoryView = percentageView.view
+            
+            let size = CGSize(width: UIScreen.main.bounds.width, height: 50)
+            percentageView.view.frame = CGRect(origin: .zero, size: size)
+        }
         
         return textField
     }
@@ -344,10 +375,10 @@ struct PercentageButtonsView: View {
 
 #Preview {
     NavigationView {
-        SwapView(selectedFromToken: Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil ),
-                selectedToToken: Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil),
-                fromAmount: "0.001231039")
+        SwapView(selectedFromToken: Token(symbol: "OMNI", name: "Omni", price: 0.36, priceChange24h: -5.28, volume24h: 500_000, logoURI: nil),
+                selectedToToken: Token(symbol: "USDC", name: "USD Coin", price: 1.00, priceChange24h: 0.01, volume24h: 750_000, logoURI: nil))
     }
+    .environmentObject(WalletManager.shared)
     .preferredColorScheme(.dark)
 }
 

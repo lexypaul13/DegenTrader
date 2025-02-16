@@ -20,8 +20,7 @@ final class ImageCacheService: ImageCacheServiceProtocol {
     
     private init() {
         cache.countLimit = memoryLimit
-        print("DEBUG: ImageCacheService initialized with memory limit: \(memoryLimit)")
-    }
+     }
     
     func getImage(from url: URL) async throws -> Image {
         print("\nDEBUG: 🖼 Fetching image: \(url.lastPathComponent)")
@@ -35,8 +34,7 @@ final class ImageCacheService: ImageCacheServiceProtocol {
                     self.cacheOrder.remove(at: index)
                 }
                 self.cacheOrder.append(url)
-                print("DEBUG: ✅ CACHE HIT [\(self.cacheHits) hits / \(self.cacheMisses) misses] - Found: \(url.lastPathComponent)")
-            }
+             }
             return Image(uiImage: cachedImage)
         }
         
@@ -48,34 +46,26 @@ final class ImageCacheService: ImageCacheServiceProtocol {
         // Create a new download task
         let downloadTask = Task<Image, Error> {
             queue.async { self.cacheMisses += 1 }
-            print("DEBUG: ❌ CACHE MISS [\(self.cacheHits) hits / \(self.cacheMisses) misses] - Downloading: \(url.lastPathComponent)")
-            
+ 
             let (data, _) = try await URLSession.shared.data(from: url)
             guard let uiImage = UIImage(data: data) else {
-                print("DEBUG: ⚠️ Failed to decode image data for: \(url.lastPathComponent)")
-                throw URLError(.cannotDecodeContentData)
+                 throw URLError(.cannotDecodeContentData)
             }
             
             queue.async {
                 self.totalDownloaded += 1
-                print("DEBUG: ⬇️ Download successful - Total downloads: \(self.totalDownloaded)")
-                
+ 
                 // Remove oldest entry if cache is full
                 if self.cacheOrder.count >= self.memoryLimit {
                     if let oldestURL = self.cacheOrder.first {
                         self.cache.removeObject(forKey: oldestURL as NSURL)
                         self.cacheOrder.removeFirst()
-                        print("DEBUG: 🗑 Removed oldest image: \(oldestURL.lastPathComponent)")
-                    }
+                     }
                 }
                 
                 // Cache the downloaded image
                 self.cache.setObject(uiImage, forKey: url as NSURL)
                 self.cacheOrder.append(url)
-                print("DEBUG: 💾 Cached new image - Cache size: [\(self.cacheOrder.count)/\(self.memoryLimit)]")
-                print("DEBUG: Cache efficiency: \(Int((Double(self.cacheHits) / Double(self.cacheHits + self.cacheMisses) * 100)))% hit rate")
-                
-                // Remove the task from active downloads
                 self.activeDownloads.removeValue(forKey: url)
             }
             
@@ -96,8 +86,7 @@ final class ImageCacheService: ImageCacheServiceProtocol {
             self.activeDownloads.removeAll()
             self.cacheHits = 0
             self.cacheMisses = 0
-            print("\nDEBUG: 🧹 Cache cleared - Removed \(count) images")
-            print("DEBUG: Cache stats reset to 0")
+
         }
     }
 } 
