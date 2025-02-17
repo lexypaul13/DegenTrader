@@ -49,16 +49,25 @@ struct DashboardView: View {
                                 }
                             )
                         
-                        Text("$\(viewModel.portfolio.totalBalance, specifier: "%.2f")")
+                        Text(viewModel.portfolio.formattedTotalBalance)
                             .font(.system(size: 48, weight: .bold))
                             .foregroundColor(AppTheme.colors.textPrimary)
                         
                         HStack(spacing: 14) {
-                            Text("$\(abs(viewModel.portfolio.profitLoss), specifier: "%.2f")")
-                                .foregroundColor(viewModel.portfolio.profitLoss == 0 ? Color(white: 0.5) : (viewModel.portfolio.profitLoss > 0 ? AppTheme.colors.positive : AppTheme.colors.negative))
+                            Text(viewModel.portfolio.formattedProfitLoss)
+                                .foregroundColor(viewModel.portfolio.profitLoss == 0 ? Color(white: 0.5) : 
+                                    (viewModel.portfolio.profitLoss > 0 ? AppTheme.colors.positive : AppTheme.colors.negative))
                             
-                            Text("\(viewModel.portfolio.profitLossPercentage >= 0 ? "+" : "")\(viewModel.portfolio.profitLossPercentage, specifier: "%.2f")%")
-                                .foregroundColor(viewModel.portfolio.profitLossPercentage == 0 ? Color(white: 0.5) : (viewModel.portfolio.profitLossPercentage > 0 ? AppTheme.colors.positive : AppTheme.colors.negative))
+                            Text("\(viewModel.portfolio.profitLossPercentage >= 0 ? "+" : "")\(viewModel.portfolio.formattedProfitLossPercentage)")
+                                .foregroundColor(viewModel.portfolio.profitLossPercentage == 0 ? Color(white: 0.5) : 
+                                    (viewModel.portfolio.profitLossPercentage > 0 ? AppTheme.colors.positive : AppTheme.colors.negative))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    (viewModel.portfolio.profitLossPercentage > 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                                        .opacity(0.2)
+                                )
+                                .cornerRadius(8)
                         }
                         .font(.system(size: 18))
                     }
@@ -79,7 +88,7 @@ struct DashboardView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text(showBalance ? "Home" : "$\(viewModel.portfolio.totalBalance, specifier: "%.2f")")
+                    Text(showBalance ? "Home" : viewModel.portfolio.formattedTotalBalance)
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
                 }
@@ -89,6 +98,9 @@ struct DashboardView: View {
         .fullScreenCover(isPresented: $showSearch) {
             SearchView()
                 .environmentObject(walletManager)
+        }
+        .onReceive(walletManager.$solPrice) { _ in
+            viewModel.updatePortfolio()
         }
         .onChange(of: walletManager.balances) { _ in
             viewModel.updatePortfolio()
@@ -165,7 +177,7 @@ struct TokenListRow: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppTheme.colors.textPrimary)
                 
-                Text("\(token.amount, specifier: "%.5f") \(token.token.symbol)")
+                Text(token.formattedAmount)
                     .font(.system(size: 14))
                     .foregroundColor(AppTheme.colors.textSecondary)
             }
@@ -174,13 +186,19 @@ struct TokenListRow: View {
             
             // Price Info
             VStack(alignment: .trailing, spacing: 4) {
-                Text("$\(token.value, specifier: "%.2f")")
+                Text(token.formattedValue)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppTheme.colors.textPrimary)
                 
-                Text("\(token.token.priceChange24h, specifier: "%.2f")%")
-                    .font(.system(size: 14))
-                    .foregroundColor(token.token.priceChange24h >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                HStack(spacing: 4) {
+                    Text(token.priceChangeUSD >= 0 ? "+" : "-")
+                        .font(.system(size: 14))
+                        .foregroundColor(token.priceChangeUSD >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                    
+                    Text(token.formattedPriceChangeUSD)
+                        .font(.system(size: 14))
+                        .foregroundColor(token.priceChangeUSD >= 0 ? AppTheme.colors.positive : AppTheme.colors.negative)
+                }
             }
         }
         .padding()

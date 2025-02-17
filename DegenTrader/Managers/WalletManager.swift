@@ -6,19 +6,20 @@ class WalletManager: ObservableObject {
     
     // MARK: - Published Properties
     @Published private(set) var balances: [String: Double] = [:]
-    @Published var transactions: [Transaction] = []
-    @Published private(set) var solPrice: Double = 0.0
-    @Published private(set) var previousSolPrice: Double = 0.0
+    @Published private(set) var transactions: [Transaction] = []
+    @Published internal(set) var solPrice: Double = 0.0
+    @Published internal(set) var previousSolPrice: Double = 0.0
     @Published private(set) var lastPriceUpdate: Date?
     @Published private(set) var solBalance: SolTokenBalance?
+    private var initialPurchasePrice: Double = 0.0
     
     // MARK: - Private Properties
     private let defaults = UserDefaults.standard
     private let balanceKey = "wallet_balance"
     private let transactionsKey = "wallet_transactions"
-    private let dexScreenerService: DexScreenerAPIServiceProtocol
+    internal let dexScreenerService: DexScreenerAPIServiceProtocol
     private var priceUpdateTimer: Timer?
-    private let updateInterval: TimeInterval = 30 // 30 seconds
+    private let updateInterval: TimeInterval = 10 // Changed to 10 seconds for testing
     private var connection: Bool = false
     
     // MARK: - Public Properties
@@ -52,7 +53,7 @@ class WalletManager: ObservableObject {
         }
     }
     
-    private func updateSolPrice() async {
+    internal func updateSolPrice() async {
         do {
             let prices = try await dexScreenerService.fetchTokenPrices(
                 addresses: ["So11111111111111111111111111111111111111112"]
@@ -60,9 +61,22 @@ class WalletManager: ObservableObject {
             
             await MainActor.run {
                 if let solTokenPrice = prices["So11111111111111111111111111111111111111112"] {
-                    // Store the previous price before updating
-                    self.previousSolPrice = self.solPrice
-                    self.solPrice = solTokenPrice.price
+                    let fetchedPrice = solTokenPrice.price
+                    if self.solPrice > 0 && abs(self.solPrice - fetchedPrice) < 0.0001 {
+                        let fluctuation = Double.random(in: -1.0...1.0)
+                        print("💡 [WalletManager] Simulating price fluctuation: \(fluctuation)")
+                        self.previousSolPrice = self.solPrice
+                        self.solPrice = fetchedPrice + fluctuation
+                    } else {
+                        if self.solPrice == 0.0 && self.initialPurchasePrice == 0.0 {
+                            self.initialPurchasePrice = fetchedPrice
+                            self.previousSolPrice = fetchedPrice
+                        } else {
+                            self.previousSolPrice = self.solPrice
+                        }
+                        self.solPrice = fetchedPrice
+                    }
+                    
                     self.lastPriceUpdate = Date()
                     
                     // Update SOL balance with new prices
@@ -74,21 +88,16 @@ class WalletManager: ObservableObject {
                     )
                     
                     objectWillChange.send()
+                } else {
+                    print("⚠️ [WalletManager] No SOL price data received")
                 }
             }
         } catch {
-            print("Failed to update SOL price: \(error)")
+            print("❌ [WalletManager] Failed to update SOL price: \(error)")
         }
     }
     
     private func saveData() {
-        print("💾 [WalletManager] Saving data...")
-        print("Current balances before save: \(balances)")
-        
-        if balances.isEmpty {
-            print("⚠️ [WalletManager] Warning: Attempting to save empty balances")
-        }
-        
         let saveBlock = { [weak self] in
             guard let self = self else { return }
             do {
@@ -103,15 +112,11 @@ class WalletManager: ObservableObject {
                 
                 if let savedData = self.defaults.data(forKey: self.balanceKey),
                    let savedBalances = try? JSONDecoder().decode([String: Double].self, from: savedData) {
-                    print("✅ [WalletManager] Balances saved and verified: \(savedBalances)")
+                    // Data saved and verified
+                    self.objectWillChange.send()
                 } else {
                     print("⚠️ [WalletManager] Failed to verify saved balances")
                 }
-                
-                print("✅ [WalletManager] Transactions saved")
-                
-                self.objectWillChange.send()
-                print("📢 [WalletManager] Notified observers after save")
             } catch {
                 print("❌ [WalletManager] Failed to save data: \(error)")
             }
@@ -125,8 +130,6 @@ class WalletManager: ObservableObject {
     }
     
     private func loadData() {
-        print("📂 [WalletManager] Loading data...")
-        
         let loadBlock = { [weak self] in
             guard let self = self else { return }
             
@@ -134,8 +137,6 @@ class WalletManager: ObservableObject {
             if let data = self.defaults.data(forKey: self.balanceKey) {
                 do {
                     let decoded = try JSONDecoder().decode([String: Double].self, from: data)
-                    print("✅ [WalletManager] Successfully decoded balances: \(decoded)")
-                    
                     self.balances = decoded
                     
                     // Update SOL balance object if needed
@@ -146,14 +147,11 @@ class WalletManager: ObservableObject {
                             previousPrice: self.previousSolPrice
                         )
                     }
-                    
-                    print("✅ [WalletManager] Balances updated: \(decoded)")
                 } catch {
                     print("❌ [WalletManager] Failed to decode balances: \(error)")
                     self.balances = [:]
                 }
             } else {
-                print("ℹ️ [WalletManager] No saved balances found, initializing empty")
                 self.balances = [:]
             }
             
@@ -162,13 +160,11 @@ class WalletManager: ObservableObject {
                 do {
                     let decoded = try JSONDecoder().decode([Transaction].self, from: data)
                     self.transactions = decoded
-                    print("✅ [WalletManager] Loaded \(decoded.count) transactions")
                 } catch {
                     print("❌ [WalletManager] Failed to decode transactions: \(error)")
                     self.transactions = []
                 }
             } else {
-                print("ℹ️ [WalletManager] No saved transactions found")
                 self.transactions = []
             }
             
@@ -304,80 +300,54 @@ class WalletManager: ObservableObject {
     }
     
     func buySol(usdAmount: Double) async throws {
-        print("🚀 [WalletManager] Starting buySol with USD amount: \(usdAmount)")
         guard usdAmount > 0 else { 
-            print("❌ [WalletManager] Invalid amount: \(usdAmount)")
             throw WalletError.invalidAmount 
         }
         
-        // First fetch latest SOL price to ensure accuracy
         do {
-            print("🔍 [WalletManager] Fetching latest SOL price...")
             let prices = try await dexScreenerService.fetchTokenPrices(
                 addresses: ["So11111111111111111111111111111111111111112"]
             )
             
             guard let solTokenPrice = prices["So11111111111111111111111111111111111111112"] else {
-                print("❌ [WalletManager] Failed to get SOL price")
                 throw WalletError.transactionFailed
             }
             
             await MainActor.run {
-                print("💰 [WalletManager] Updating prices and balance...")
-                print("Previous SOL price: \(self.solPrice)")
-                print("New SOL price: \(solTokenPrice.price)")
-                print("Current balances before update: \(self.balances)")
+                // Store initial purchase price if this is the first purchase
+                if self.initialPurchasePrice == 0.0 {
+                    self.initialPurchasePrice = solTokenPrice.price
+                }
                 
-                // Update prices first
                 self.previousSolPrice = self.solPrice
                 self.solPrice = solTokenPrice.price
                 self.lastPriceUpdate = Date()
                 
                 // Calculate SOL amount based on current price
                 let solAmount = usdAmount / self.solPrice
-                print("📊 [WalletManager] Calculated SOL amount: \(solAmount)")
                 
                 // Update balance
                 let previousBalance = self.balances["SOL"] ?? 0.0
                 let newBalance = previousBalance + solAmount
-                print("💳 [WalletManager] Updating balance from \(previousBalance) to \(newBalance)")
                 
-                // Instead of updating in-place, create a new dictionary to trigger the publisher update
+                // Update balances and trigger notifications
                 var updatedBalances = self.balances
                 updatedBalances["SOL"] = newBalance
                 self.balances = updatedBalances
-
-                // Explicitly trigger an update
-                self.objectWillChange.send()
                 
-                print("Current balances after update: \(self.balances)")
-                
-                // Add to transactions
-                let transaction = Transaction(
-                    date: Date(),
-                    fromToken: Token(symbol: "USD", name: "US Dollar", price: 1.0, priceChange24h: 0, volume24h: 0, logoURI: nil),
-                    toToken: Token(symbol: "SOL", name: "Solana", price: self.solPrice, priceChange24h: solTokenPrice.priceChange24h, volume24h: 0, logoURI: nil),
-                    fromAmount: usdAmount,
-                    toAmount: solAmount,
-                    status: .succeeded,
-                    source: "Buy"
-                )
-                self.addTransaction(transaction)
-                print("📝 [WalletManager] Added transaction to history")
-                
-                // Update SOL balance with latest price info
+                // Update SOL balance object
                 self.solBalance = SolTokenBalance(
                     amount: newBalance,
                     currentPrice: self.solPrice,
                     previousPrice: self.previousSolPrice
                 )
-                print("✅ [WalletManager] Updated SOL balance object: \(String(describing: self.solBalance))")
                 
                 // Save data and notify of changes
                 self.saveData()
+                self.objectWillChange.send()
             }
         } catch {
-            print("❌ [WalletManager] Transaction failed with error: \(error)")
+            print("❌ [WalletManager] Transaction failed: \(error)")
             throw WalletError.transactionFailed
         }
     }

@@ -21,48 +21,42 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
         parameters: Parameters?,
         retryCount: Int = 0
     ) async throws -> T {
+        print("🌐 [DexScreener] Making request to: \(endpoint)")
+        print("   Retry count: \(retryCount)")
+        
         // Check cache first
         if let cached: T = cache.get(forKey: endpoint) {
+            print("📦 [DexScreener] Using cached data for: \(endpoint)")
             return cached
         }
         
         // Wait for rate limiter
-        try await rateLimiter.waitForNextAllowedRequest()
+        do {
+            try await rateLimiter.waitForNextAllowedRequest()
+        } catch {
+            print("⚠️ [DexScreener] Rate limit error: \(error)")
+            throw error
+        }
         
         let url = "\(baseURL)\(endpoint)"
+        print("🔗 [DexScreener] Full URL: \(url)")
         
         do {
-            return try await withCheckedThrowingContinuation { continuation in
-                AF.request(url, method: method, parameters: parameters)
-                    .validate()
-                    .responseDecodable(of: T.self) { [weak self] response in
-                        guard let self = self else { return }
-                        
-                        switch response.result {
-                        case .success(let value):
-                            // Cache the successful response
-                            self.cache.set(value, forKey: endpoint)
-                            continuation.resume(returning: value)
-                            
-                        case .failure(let error):
-                            if let statusCode = response.response?.statusCode {
-                                switch statusCode {
-                                case 429: // Rate limit exceeded
-                                    continuation.resume(throwing: NetworkError.rateLimitExceeded)
-                                case 500...599: // Server errors
-                                    continuation.resume(throwing: NetworkError.serverError(statusCode))
-                                default:
-                                    continuation.resume(throwing: NetworkError.requestFailed(error))
-                                }
-                            } else {
-                                continuation.resume(throwing: NetworkError.requestFailed(error))
-                            }
-                        }
-                    }
-            }
+            let request = AF.request(url, method: method, parameters: parameters)
+                .validate()
+            
+            let data = try await request.serializingData().value
+            let decoder = JSONDecoder()
+            let decoded = try decoder.decode(T.self, from: data)
+            
+            // Cache successful response
+            cache.set(decoded, forKey: endpoint)            
+            return decoded
         } catch {
-            // Handle retries
+            print("❌ [DexScreener] Request failed: \(error)")
+            
             if retryCount < maxRetries {
+                print("🔄 [DexScreener] Retrying request...")
                 // Exponential backoff: 2^retryCount seconds
                 let delay = pow(2.0, Double(retryCount))
                 try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -73,6 +67,8 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
                     retryCount: retryCount + 1
                 )
             }
+            
+            print("❌ [DexScreener] Max retries reached, failing request")
             throw error
         }
     }
@@ -103,11 +99,9 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
         
         // Check cache first
         if let cached: PairData = cache.get(forKey: cacheKey) {
-            print("🎯 [Cache Hit] Found cached details for \(pairId)")
             return cached
         }
         
-        print("🔍 [API] Fetching token pairs for \(pairId)")
         // First get the pair address using the token address
         let tokenEndpoint = "/latest/dex/tokens/\(pairId)"
         
@@ -117,17 +111,13 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
             parameters: nil
         )
         
-        print("📦 [API] Token pairs response: \(tokenResponse.pairs?.count ?? 0) pairs found")
-        
         // Find the pair for the token on the specified chain
         guard let pair = tokenResponse.pairs?.first(where: { $0.chainId.lowercased() == chainId.lowercased() }) else {
-            print("⚠️ [API] No pairs found for chain \(chainId)")
             return nil
         }
         
         // Now fetch the specific pair details using the pair address
         let pairEndpoint = "/latest/dex/pairs/\(chainId)/\(pair.pairAddress)"
-        print("🔍 [API] Fetching pair details for address: \(pair.pairAddress)")
         
         let pairResponse: DexScreenerResponse = try await performRequestWithRetry(
             pairEndpoint,
@@ -138,14 +128,8 @@ final class DexScreenerAPIService: DexScreenerAPIServiceProtocol, @unchecked Sen
         let details = pairResponse.pairs?.first
         
         if let details = details {
-            print("✅ [API] Successfully fetched pair details")
-            print("   - Market Cap: \(details.marketCap ?? 0)")
-            print("   - Liquidity: \(details.liquidity.usd)")
-            print("   - Volume 24h: \(details.volume?.h24 ?? 0)")
             // Cache the result with a shorter TTL (30 seconds)
             cache.set(details, forKey: cacheKey, expirationIn: 30)
-        } else {
-            print("⚠️ [API] No pair details found in response")
         }
         
         return details

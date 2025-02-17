@@ -36,24 +36,27 @@ struct SolTokenBalance {
     let currentPrice: Double
     let previousPrice: Double
     
-    var formattedAmount: String {
-        String(format: "%.5f SOL", amount)  // Shows "2.50000 SOL"
-    }
-    
-    var formattedUSDValue: String {
-        String(format: "$%.2f", usdValue)   // Shows "$0.00"
-    }
-    
-    var formattedPriceChange: String {
-        String(format: "%.2f%%", priceChangePercentage)  // Shows "0.00%"
-    }
-    
-    var usdValue: Double {
-        amount * currentPrice
+    var priceChangeUSD: Double {
+        currentPrice - previousPrice
     }
     
     var priceChangePercentage: Double {
-        guard previousPrice > 0 else { return 0 }
-        return ((currentPrice - previousPrice) / previousPrice) * 100
+        previousPrice > 0 ? ((currentPrice - previousPrice) / previousPrice) * 100 : 0
+    }
+    
+    var formattedAmount: String {
+        String(format: "%.5f SOL", amount)
+    }
+    
+    var formattedUSDValue: String {
+        String(format: "$%.2f", amount * currentPrice)
+    }
+    
+    var formattedPriceChange: String {
+        String(format: "%.2f%%", priceChangePercentage)
+    }
+    
+    var formattedPriceChangeUSD: String {
+        String(format: "$%.4f", abs(priceChangeUSD))
     }
 } 

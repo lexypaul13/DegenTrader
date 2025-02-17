@@ -9,15 +9,21 @@ class DashboardViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init(walletManager: WalletManager) {
-        print("🏗️ [DashboardViewModel] Initializing with WalletManager")
+        print("🏗️ [DashboardViewModel] Initializing...")
         self.walletManager = walletManager
-        self.portfolio = Portfolio(totalBalance: 0, tokens: [], profitLoss: 0, profitLossPercentage: 0)
+        self.portfolio = Portfolio(
+            totalBalance: 0,
+            tokens: [],
+            profitLoss: 0,
+            profitLossPercentage: 0,
+            priceChangeUSD: 0
+        )
         self.trendingTokens = []
         
-        // Update portfolio with real wallet data
-        updatePortfolio()
-        
-        // Set up observation of specific wallet properties
+        setupObservers()
+    }
+    
+    private func setupObservers() {
         print("👀 [DashboardViewModel] Setting up wallet observation")
         
         // Combine multiple publishers into a single update trigger
@@ -28,55 +34,57 @@ class DashboardViewModel: ObservableObject {
         )
         .receive(on: DispatchQueue.main)
         .sink { [weak self] balances, price, solBalance in
-            print("🔄 [DashboardViewModel] Received combined update:")
-            print("Balances: \(balances)")
-            print("Price: \(price)")
-            print("SOL Balance: \(solBalance?.amount ?? 0.0)")
+            print("📊 [DashboardViewModel] State Update:")
+            print("   Balance: \(balances["SOL"] ?? 0) SOL")
+            print("   Price: $\(price)")
+            print("   24h Change: \(solBalance?.priceChangePercentage ?? 0)%")
+            print("   USD Value: \(solBalance?.formattedUSDValue ?? "$0.00")")
             self?.updatePortfolio()
         }
         .store(in: &cancellables)
     }
     
     func updatePortfolio() {
-        print("🔄 [DashboardViewModel] Starting portfolio update")
-        
-        // Access balances directly from walletManager.balances
         let rawBalance = walletManager.balances["SOL"] ?? 0.0
-        print("💰 [DashboardViewModel] Raw SOL balance from walletManager.balances: \(rawBalance)")
-        
         let currentPrice = walletManager.solPrice
-        let priceChange = ((currentPrice - walletManager.previousSolPrice) / walletManager.previousSolPrice) * 100
-        
-        print("📊 [DashboardViewModel] Current values:")
-        print("Balance: \(rawBalance) SOL")
-        print("Current Price: $\(currentPrice)")
-        print("Price Change: \(priceChange)%")
+        let previousPrice = walletManager.previousSolPrice
+        let priceChangeUSD = currentPrice - previousPrice
+        let priceChangePercentage = previousPrice > 0 
+            ? ((currentPrice - previousPrice) / previousPrice) * 100 
+            : 0
         
         let solToken = Token(
             symbol: "SOL",
             name: "Solana",
             price: currentPrice,
-            priceChange24h: priceChange,
+            priceChange24h: priceChangePercentage,
             volume24h: 0.0,
             logoURI: nil,
             address: "So11111111111111111111111111111111111111112"
         )
         
-        let portfolioToken = PortfolioToken(token: solToken, amount: rawBalance)
+        let portfolioToken = PortfolioToken(
+            token: solToken,
+            amount: rawBalance,
+            priceChangeUSD: priceChangeUSD
+        )
+        
         let totalValue = rawBalance * currentPrice
+        let profitLoss = totalValue - (rawBalance * previousPrice)
         
         DispatchQueue.main.async {
             self.portfolio = Portfolio(
                 totalBalance: totalValue,
                 tokens: [portfolioToken],
-                profitLoss: totalValue - (rawBalance * self.walletManager.previousSolPrice),
-                profitLossPercentage: priceChange
+                profitLoss: profitLoss,
+                profitLossPercentage: priceChangePercentage,
+                priceChangeUSD: priceChangeUSD
             )
             
-            print("✅ [DashboardViewModel] Portfolio updated:")
-            print("Total Value: $\(totalValue)")
-            print("Profit/Loss: $\(self.portfolio.profitLoss)")
-            print("P/L %: \(self.portfolio.profitLossPercentage)%")
+            print("💼 [DashboardViewModel] Portfolio Updated:")
+            print("   Total Value: \(self.portfolio.formattedTotalBalance)")
+            print("   P/L: \(self.portfolio.formattedProfitLoss) (\(self.portfolio.formattedProfitLossPercentage))")
+            print("   Price Change: \(self.portfolio.formattedPriceChangeUSD)")
             
             self.objectWillChange.send()
         }

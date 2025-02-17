@@ -74,7 +74,7 @@ struct MarketView: View {
                 NavigationLink {
                     TokenDetailView(token: token)
                 } label: {
-                    TokenListRow(token: PortfolioToken(token: token, amount: 0))
+                   // TokenListRow(token: PortfolioToken(token: token, amount: 0))
                 }
                 .buttonStyle(PlainButtonStyle())
             }

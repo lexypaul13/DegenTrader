@@ -165,23 +165,24 @@ struct MockData {
     static let portfolio = Portfolio(
         totalBalance: 1.54,
         tokens: [
-            PortfolioToken(token: tokens[0], amount: 0.00503),
-            PortfolioToken(token: tokens[1], amount: 10411.76494),
-            PortfolioToken(token: tokens[2], amount: 779184.78955),
-            PortfolioToken(token: tokens[3], amount: 49547.88144),
-            PortfolioToken(token: tokens[4], amount: 0.00012),
-            PortfolioToken(token: tokens[5], amount: 0.00234),
-            PortfolioToken(token: tokens[6], amount: 123.45),
-            PortfolioToken(token: tokens[7], amount: 15.67),
-            PortfolioToken(token: tokens[8], amount: 3.45),
-            PortfolioToken(token: tokens[9], amount: 8.92),
-            PortfolioToken(token: tokens[10], amount: 156.78),
-            PortfolioToken(token: tokens[11], amount: 12.34),
-            PortfolioToken(token: tokens[12], amount: 45.67),
-            PortfolioToken(token: tokens[13], amount: 1.23),
-            PortfolioToken(token: tokens[14], amount: 789.12)
+            PortfolioToken(token: tokens[0], amount: 0.00503, priceChangeUSD: -0.15),
+            PortfolioToken(token: tokens[1], amount: 10411.76494, priceChangeUSD: 0.23),
+            PortfolioToken(token: tokens[2], amount: 779184.78955, priceChangeUSD: -0.05),
+            PortfolioToken(token: tokens[3], amount: 49547.88144, priceChangeUSD: 0.12),
+            PortfolioToken(token: tokens[4], amount: 0.00012, priceChangeUSD: -0.08),
+            PortfolioToken(token: tokens[5], amount: 0.00234, priceChangeUSD: 0.19),
+            PortfolioToken(token: tokens[6], amount: 123.45, priceChangeUSD: -0.11),
+            PortfolioToken(token: tokens[7], amount: 15.67, priceChangeUSD: 0.07),
+            PortfolioToken(token: tokens[8], amount: 3.45, priceChangeUSD: -0.03),
+            PortfolioToken(token: tokens[9], amount: 8.92, priceChangeUSD: 0.14),
+            PortfolioToken(token: tokens[10], amount: 156.78, priceChangeUSD: -0.09),
+            PortfolioToken(token: tokens[11], amount: 12.34, priceChangeUSD: 0.21),
+            PortfolioToken(token: tokens[12], amount: 45.67, priceChangeUSD: -0.06),
+            PortfolioToken(token: tokens[13], amount: 1.23, priceChangeUSD: 0.17),
+            PortfolioToken(token: tokens[14], amount: 789.12, priceChangeUSD: -0.13)
         ],
         profitLoss: -3.35,
-        profitLossPercentage: -23.47
+        profitLossPercentage: -23.47,
+        priceChangeUSD: -0.15
     )
 } 

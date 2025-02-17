@@ -34,9 +34,23 @@ struct PortfolioToken: Identifiable {
     let id = UUID()
     let token: Token
     let amount: Double
+    let priceChangeUSD: Double
     
     var value: Double {
         token.price * amount
+    }
+    
+    // Formatted values
+    var formattedAmount: String {
+        String(format: "%.5f %@", amount, token.symbol)
+    }
+    
+    var formattedValue: String {
+        String(format: "$%.2f", value)
+    }
+    
+    var formattedPriceChangeUSD: String {
+        String(format: "$%.4f", abs(priceChangeUSD))
     }
 }
 
@@ -45,5 +59,22 @@ struct Portfolio {
     let tokens: [PortfolioToken]
     let profitLoss: Double
     let profitLossPercentage: Double
-
+    let priceChangeUSD: Double
+    
+    // Formatted values
+    var formattedTotalBalance: String {
+        String(format: "$%.2f", totalBalance)
+    }
+    
+    var formattedProfitLoss: String {
+        String(format: "$%.4f", abs(profitLoss))
+    }
+    
+    var formattedProfitLossPercentage: String {
+        String(format: "%.2f%%", profitLossPercentage)
+    }
+    
+    var formattedPriceChangeUSD: String {
+        String(format: "$%.4f", abs(priceChangeUSD))
+    }
 }
